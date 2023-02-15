@@ -1,0 +1,14 @@
+# This compose file is used for setting up the local development environment.
+services:
+  db:
+    container_name: mahlzeit_db
+    image: postgres:15-alpine
+    ports:
+      - 5432:5432
+    env_file:
+      - .env.local
+    volumes:
+      - mahlzeit_data:/var/lib/postgresql/data
+
+volumes:
+  mahlzeit_data
