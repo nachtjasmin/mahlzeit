@@ -1,11 +1,11 @@
 package main
 
 import (
-	"html/template"
-	"log"
 	"net/http"
 	"time"
 
+	"codeberg.org/mahlzeit/mahlzeit/internal/app"
+	"codeberg.org/mahlzeit/mahlzeit/internal/recipe"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -13,7 +13,7 @@ import (
 // routes returns the [chi.Mux] that is going to be used for our HTTP handlers.
 // It's extracted into this function to see quickly which routes exist and where
 // they are registered.
-func routes() *chi.Mux {
+func routes(c *app.Application) *chi.Mux {
 	r := chi.NewMux()
 
 	// The default middleware stack
@@ -30,24 +30,12 @@ func routes() *chi.Mux {
 	// processing should be stopped.
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static/"))))
+	// Add a static file server for the assets.
+	// In the future, those assets should be embedded into the binary to simplify the deployment.
+	fileServer := http.FileServer(http.Dir("./web/static/"))
+	r.Handle("/static/*", http.StripPrefix("/static", fileServer))
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		ts, err := template.ParseGlob("./web/templates/**/*.tmpl")
-		if err != nil {
-			log.Println(err.Error())
-			http.Error(w, "Internal Server Error", 500)
-			return
-		}
-
-		// Use the ExecuteTemplate() method to write the content of the "base"
-		// template as the response body.
-		err = ts.ExecuteTemplate(w, "base", nil)
-		if err != nil {
-			log.Println(err.Error())
-			http.Error(w, "Internal Server Error", 500)
-		}
-	})
+	r.Route("/recipes", recipe.Handler(c))
 
 	return r
 }

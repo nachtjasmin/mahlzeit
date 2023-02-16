@@ -10,6 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"codeberg.org/mahlzeit/mahlzeit/internal/app"
 )
 
 const ExitCodeOnError = 1
@@ -34,13 +36,16 @@ func main() {
 // execution into run. That itself makes it testable and the provided [context.Context] can be
 // used for downstream goroutines to cancel their operations.
 func run(ctx context.Context, args []string) error {
+	cfg := &app.Application{
+	}
+
 	log.Println("Starting server on :4000")
 	h := &http.Server{
 		BaseContext: func(net.Listener) context.Context {
 			return ctx
 		},
 		Addr:              ":4000",
-		Handler:           routes(),
+		Handler:           routes(cfg),
 		ReadHeaderTimeout: time.Second, // protect against SLOWLORIS attack
 	}
 	return h.ListenAndServe()
