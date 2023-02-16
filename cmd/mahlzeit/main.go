@@ -13,6 +13,7 @@ import (
 
 	"codeberg.org/mahlzeit/mahlzeit/db/queries"
 	"codeberg.org/mahlzeit/mahlzeit/internal/app"
+	"github.com/BurntSushi/toml"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -38,23 +39,29 @@ func main() {
 // execution into run. That itself makes it testable and the provided [context.Context] can be
 // used for downstream goroutines to cancel their operations.
 func run(ctx context.Context, args []string) error {
-	pool, err := pgxpool.Connect(ctx, "postgres://postgres:postgres@localhost:5432/mahlzeit?sslmode=disable")
+	var cfg app.Configuration
+	_, err := toml.DecodeFile("config.toml", &cfg)
+	if err != nil {
+		return fmt.Errorf("parsing config.toml failed: %w", err)
+	}
+
+	pool, err := pgxpool.Connect(ctx, cfg.Database.ConnectionString)
 	if err != nil {
 		return err
 	}
 
-	cfg := &app.Application{
-		Templates: app.NewTemplates("./web/templates"),
+	app := &app.Application{
+		Templates: app.NewTemplates(cfg.Web.TemplateDir),
 		Queries:   queries.New(pool),
 	}
 
-	log.Println("Starting server on :4000")
+	log.Printf("Starting server on: %s\n", cfg.Web.Endpoint)
 	h := &http.Server{
 		BaseContext: func(net.Listener) context.Context {
 			return ctx
 		},
-		Addr:              ":4000",
-		Handler:           routes(cfg),
+		Addr:              cfg.Web.Endpoint,
+		Handler:           routes(app),
 		ReadHeaderTimeout: time.Second, // protect against SLOWLORIS attack
 	}
 	return h.ListenAndServe()

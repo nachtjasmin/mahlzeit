@@ -1,0 +1,6 @@
+[web]
+endpoint = ":4000"
+template-dir = "./web/templates"
+
+[database]
+connection-string = "postgres://postgres:postgres@localhost:5432/mahlzeit"

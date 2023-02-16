@@ -8,3 +8,13 @@ type Application struct {
 	Templates Templates
 	Queries   *queries.Queries
 }
+
+type Configuration struct {
+	Database struct {
+		ConnectionString string `toml:"connection-string"`
+	} `toml:"database"`
+	Web struct {
+		Endpoint    string `toml:"endpoint"`
+		TemplateDir string `toml:"template-dir"`
+	}
+}
