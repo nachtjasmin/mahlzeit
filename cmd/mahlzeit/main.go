@@ -37,6 +37,7 @@ func main() {
 // used for downstream goroutines to cancel their operations.
 func run(ctx context.Context, args []string) error {
 	cfg := &app.Application{
+		Templates: app.NewTemplates("./web/templates"),
 	}
 
 	log.Println("Starting server on :4000")
