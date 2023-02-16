@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 const ExitCodeOnError = 1
@@ -31,7 +34,16 @@ func main() {
 // execution into run. That itself makes it testable and the provided [context.Context] can be
 // used for downstream goroutines to cancel their operations.
 func run(ctx context.Context, args []string) error {
-	return nil
+	log.Println("Starting server on :4000")
+	h := &http.Server{
+		BaseContext: func(net.Listener) context.Context {
+			return ctx
+		},
+		Addr:              ":4000",
+		Handler:           routes(),
+		ReadHeaderTimeout: time.Second, // protect against SLOWLORIS attack
+	}
+	return h.ListenAndServe()
 }
 
 func recoverPanic() {
