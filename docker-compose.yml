@@ -11,4 +11,4 @@ services:
       - mahlzeit_data:/var/lib/postgresql/data
 
 volumes:
-  mahlzeit_data
+  mahlzeit_data:
