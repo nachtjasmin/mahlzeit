@@ -30,8 +30,8 @@ type Recipe struct {
 	ID                  int64
 	Name                string
 	Description         string
-	WorkingTime         sql.NullInt64
-	WaitingTime         sql.NullInt64
+	WorkingTime         pgtype.Interval
+	WaitingTime         pgtype.Interval
 	CreatedAt           time.Time
 	UpdatedAt           sql.NullTime
 	CreatedBy           int64
@@ -49,7 +49,7 @@ type Step struct {
 	RecipeID    int64
 	SortOrder   int32
 	Instruction string
-	Time        sql.NullInt64
+	Time        pgtype.Interval
 }
 
 type StepIngredient struct {
