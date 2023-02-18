@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"io"
@@ -35,12 +36,12 @@ func NewTemplates(templateDir string) Templates {
 func (tc *Templates) Render(w io.Writer, page string, data any) error {
 	// If we don't have the templates cached, build them on demand.
 	if tc.cache == nil {
-		tmpl, err := renderPage(tc.dir, page)
+		tmpl, err := buildPageTemplate(tc.dir, page)
 		if err != nil {
 			return TemplateRenderingError{err: err, TemplateName: page}
 		}
 
-		if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
+		if err := safeRenderTemplate(tmpl, w, data); err != nil {
 			return TemplateRenderingError{err: err, TemplateName: page}
 		}
 		return nil
@@ -52,10 +53,9 @@ func (tc *Templates) Render(w io.Writer, page string, data any) error {
 		return fmt.Errorf("the template %s does not exist", page)
 	}
 
-	if err := ts.ExecuteTemplate(w, "base", data); err != nil {
+	if err := safeRenderTemplate(ts, w, data); err != nil {
 		return TemplateRenderingError{err: err, TemplateName: page}
 	}
-
 	return nil
 }
 
@@ -73,7 +73,7 @@ func (tc *Templates) BuildCache() error {
 		// The [1:] is used to remove the trailing slash.
 		name := strings.TrimPrefix(page, pagesSubDir)[1:]
 
-		rendered, err := renderPage(tc.dir, name)
+		rendered, err := buildPageTemplate(tc.dir, name)
 		if err != nil {
 			return fmt.Errorf("rendering template %s failed: %w", page, err)
 		}
@@ -85,8 +85,8 @@ func (tc *Templates) BuildCache() error {
 	return nil
 }
 
-// renderPage renders all necessary files for a single page.
-func renderPage(templateDir, page string) (*template.Template, error) {
+// buildPageTemplate renders all necessary files for a single page.
+func buildPageTemplate(templateDir, page string) (*template.Template, error) {
 	files := []string{
 		filepath.Join(templateDir, "base.tmpl"),
 		filepath.Join(templateDir, "pages", page),
@@ -98,4 +98,22 @@ func renderPage(templateDir, page string) (*template.Template, error) {
 	}
 
 	return ts, nil
+}
+
+// safeRenderTemplate renders a page with the given data to the passed writer, only if the rendering process
+// is successful. Any runtime errors are wrapped inside a TemplateRenderingError.
+func safeRenderTemplate(t *template.Template, w io.Writer, data any) error {
+	// Because any rendering error that occurs on runtime can result in incomplete outputs,
+	// we write the template to a buffer first. If that's successful, we can copy it to the writer.
+	var buf bytes.Buffer
+
+	if err := t.ExecuteTemplate(&buf, "base", data); err != nil {
+		return fmt.Errorf("runtime error on template execution: %w", err)
+	}
+
+	// Template rendering succeeded, let's copy it to the actual output.
+	// Usually this is the http.ResponseWriter.
+	_, _ = buf.WriteTo(w)
+
+	return nil
 }
