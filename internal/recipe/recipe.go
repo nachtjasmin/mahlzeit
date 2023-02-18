@@ -10,7 +10,8 @@ import (
 func Handler(c *app.Application) func(r chi.Router) {
 	return func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			_ = c.Templates.Render(w, "home.tmpl", nil)
+			names, _ := c.Queries.GetAllIngredients(r.Context())
+			_ = c.Templates.Render(w, "home.tmpl", names)
 		})
 	}
 }

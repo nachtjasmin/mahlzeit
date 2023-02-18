@@ -1,3 +1,8 @@
 {{ define "main" }}
-    <p>This is mahlzeit!</p>
+    <h1>Liste aller Zutaten</h1>
+    <ul>
+        {{ range . }}
+            <li>{{ . }}</li>
+        {{ end }}
+    </ul>
 {{ end }}
