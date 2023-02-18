@@ -7,6 +7,8 @@ package queries
 
 import (
 	"context"
+
+	"github.com/jackc/pgtype"
 )
 
 const getAllRecipesByName = `-- name: GetAllRecipesByName :many
@@ -30,6 +32,122 @@ func (q *Queries) GetAllRecipesByName(ctx context.Context) ([]GetAllRecipesByNam
 	for rows.Next() {
 		var i GetAllRecipesByNameRow
 		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRecipeByID = `-- name: GetRecipeByID :one
+select id,
+	   name,
+	   description,
+	   working_time,
+	   waiting_time,
+	   created_at,
+	   updated_at,
+	   created_by,
+	   source,
+	   servings,
+	   servings_description
+from recipes
+where id = $1
+`
+
+func (q *Queries) GetRecipeByID(ctx context.Context, id int64) (Recipe, error) {
+	row := q.db.QueryRow(ctx, getRecipeByID, id)
+	var i Recipe
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.WorkingTime,
+		&i.WaitingTime,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.Source,
+		&i.Servings,
+		&i.ServingsDescription,
+	)
+	return i, err
+}
+
+const getStepsForRecipeByID = `-- name: GetStepsForRecipeByID :many
+select instruction,
+	   "time"  as step_time,
+	   -- To get the ingredients within the same query and avoiding n+1 query pipelines,
+	   -- those are built as a JSON object using jsonb_build_object.
+	   -- Because the values can have NULL values due to the left join below, we strip those values
+	   -- with jsonb_strip_nulls. And in the end, they are grouped inside an array with jsonb_agg.
+	   jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+			   'name', ingredients.name,
+			   'amount', step_ingredients.amount,
+			   'note', step_ingredients.note
+		   ))) as ingredients
+from steps
+		 left join step_ingredients on steps.id = step_ingredients.step_id
+		 left join ingredients on step_ingredients.ingredients_id = ingredients.id
+where steps.recipe_id = $1
+group by "time", instruction
+`
+
+type GetStepsForRecipeByIDRow struct {
+	Instruction string
+	StepTime    pgtype.Interval
+	Ingredients pgtype.JSONB
+}
+
+func (q *Queries) GetStepsForRecipeByID(ctx context.Context, id int64) ([]GetStepsForRecipeByIDRow, error) {
+	rows, err := q.db.Query(ctx, getStepsForRecipeByID, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetStepsForRecipeByIDRow
+	for rows.Next() {
+		var i GetStepsForRecipeByIDRow
+		if err := rows.Scan(&i.Instruction, &i.StepTime, &i.Ingredients); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTotalIngredientsForRecipe = `-- name: GetTotalIngredientsForRecipe :many
+select ingredients.name,
+	   sum(step_ingredients.amount) as total_amount
+from steps
+		 inner join step_ingredients on steps.id = step_ingredients.step_id
+		 inner join ingredients on ingredients.id = step_ingredients.ingredients_id
+where steps.recipe_id = $1
+group by ingredients.name
+order by ingredients.name, total_amount desc
+`
+
+type GetTotalIngredientsForRecipeRow struct {
+	Name        string
+	TotalAmount int64
+}
+
+func (q *Queries) GetTotalIngredientsForRecipe(ctx context.Context, id int64) ([]GetTotalIngredientsForRecipeRow, error) {
+	rows, err := q.db.Query(ctx, getTotalIngredientsForRecipe, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTotalIngredientsForRecipeRow
+	for rows.Next() {
+		var i GetTotalIngredientsForRecipeRow
+		if err := rows.Scan(&i.Name, &i.TotalAmount); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

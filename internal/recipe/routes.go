@@ -23,5 +23,24 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				return
 			}
 		})
+		r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+			idStr := chi.URLParam(r, "id")
+			id, err := strconv.Atoi(idStr)
+			if err != nil {
+				app.HandleClientError(w, http.StatusBadRequest, err)
+				return
+			}
+
+			res, err := h.GetSingleRecipe(r.Context(), id)
+			if err != nil {
+				app.HandleServerError(w, err)
+				return
+			}
+
+			if err := c.Templates.Render(w, "recipes/single.tmpl", res); err != nil {
+				app.HandleServerError(w, err)
+				return
+			}
+		})
 	}
 }

@@ -1,0 +1,48 @@
+{{ define "main" }}
+    <header>
+        <h1>{{ .Name }}</h1>
+        <p>erstellt am:
+            <time>{{ .CreatedAt }}</time>
+        </p>
+        <div>
+            <p>Portionen: {{ .Servings }}</p>
+        </div>
+    </header>
+    <aside>
+        <h2>Zutaten</h2>
+        <ul>
+            {{ range .Ingredients }}
+                <li>{{ .Amount }} {{ .Name }}</li>
+            {{ end }}
+        </ul>
+    </aside>
+    <main>
+        <section>
+            <h2>Beschreibung</h2>
+            {{ .Description }}
+        </section>
+
+        <section>
+            <h2>Zubereitung</h2>
+            {{ range $idx, $step := .Steps }}
+                <h3>Schritt {{ add $idx 1 }}
+                    {{ with .Time }}
+                        (dauert:
+                        <time> {{ . }}</time>)
+                    {{ end }}
+                </h3>
+                {{ if (gt (len .Ingredients) 0) }}
+                    <div>
+                        Zutaten:
+                        <ul>
+                            {{ range .Ingredients }}
+                                <li>{{ .Amount }} {{ .Name }} ({{ .Note }})</li>
+                            {{ end }}
+                        </ul>
+                    </div>
+                {{ end }}
+                <p>{{ .Instruction }}</p>
+            {{ end }}
+        </section>
+    </main>
+{{ end }}
