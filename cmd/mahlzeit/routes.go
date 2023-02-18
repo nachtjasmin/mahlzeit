@@ -36,7 +36,7 @@ func routes(c *app.Application) *chi.Mux {
 	fileServer := http.FileServer(http.Dir("./web/static/"))
 	r.Handle("/static/*", http.StripPrefix("/static", fileServer))
 
-	r.Route("/recipes", recipe.Handler(c))
+	r.Route("/recipes", recipe.ChiHandler(c))
 
 	return r
 }
