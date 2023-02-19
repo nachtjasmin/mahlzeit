@@ -30,7 +30,9 @@ func (h *Handler) GetAllRecipes(ctx context.Context) ([]ListEntry, error) {
 	return res, nil
 }
 
-func (h *Handler) GetSingleRecipe(ctx context.Context, id int) (*Recipe, error) {
+// GetSingleRecipe returns a recipe by its ID. Optionally, the desired amount of servings
+// can be provided. Any value less or equal to zero is ignored.
+func (h *Handler) GetSingleRecipe(ctx context.Context, id, servings int) (*Recipe, error) {
 	// TODO: execute the following queries in a transaction
 	base, err := h.app.Queries.GetRecipeByID(ctx, int64(id))
 	if err != nil {
@@ -88,6 +90,24 @@ func (h *Handler) GetSingleRecipe(ctx context.Context, id int) (*Recipe, error) 
 		s.Ingredients = ingredients
 
 		res.Steps = append(res.Steps, s)
+	}
+
+	// Let's calculate the actual amounts for the ingredients
+	if servings > 0 {
+		baseServings, newServings := float64(res.Servings), float64(servings)
+		res.Servings = servings
+
+		for i, ingredient := range res.Ingredients {
+			ingredient.Amount = ingredient.Amount / baseServings * newServings
+			res.Ingredients[i] = ingredient
+		}
+		for i, step := range res.Steps {
+			for j, ingredient := range step.Ingredients {
+				ingredient.Amount = ingredient.Amount / baseServings * newServings
+				step.Ingredients[j] = ingredient
+			}
+			res.Steps[i] = step
+		}
 	}
 
 	return res, nil

@@ -5,7 +5,12 @@
             <time>{{ .CreatedAt }}</time>
         </p>
         <div>
-            <p>Portionen: {{ .Servings }}</p>
+            <label for="servings_number">Portionen:</label>
+            <form method="get">
+                <input id="servings_number" name="servings" type="number" value="{{ .Servings}}" min="1"
+                       placeholder="Anzahl der Portionen">
+                <button>Berechnen</button>
+            </form>
         </div>
     </header>
     <aside>

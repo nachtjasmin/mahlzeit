@@ -31,7 +31,16 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				return
 			}
 
-			res, err := h.GetSingleRecipe(r.Context(), id)
+			servings := 0
+			if servingsParam := r.URL.Query().Get("servings"); servingsParam != "" {
+				// We deliberately ignore any errors, and "handle" them by checking whether we have a valid int.
+				p, _ := strconv.Atoi(servingsParam)
+				if p > 0 {
+					servings = p
+				}
+			}
+
+			res, err := h.GetSingleRecipe(r.Context(), id, servings)
 			if err != nil {
 				app.HandleServerError(w, err)
 				return
