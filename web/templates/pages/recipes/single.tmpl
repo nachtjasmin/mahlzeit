@@ -8,6 +8,8 @@
             <label for="servings_number">Portionen:</label>
             <form method="get">
                 <input id="servings_number" name="servings" type="number" value="{{ .Servings}}" min="1"
+                       data-hx-get
+                       data-hx-target="body"
                        placeholder="Anzahl der Portionen">
                 <button>Berechnen</button>
             </form>
