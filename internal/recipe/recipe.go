@@ -30,9 +30,8 @@ func (h *Handler) GetAllRecipes(ctx context.Context) ([]ListEntry, error) {
 	return res, nil
 }
 
-// GetSingleRecipe returns a recipe by its ID. Optionally, the desired amount of servings
-// can be provided. Any value less or equal to zero is ignored.
-func (h *Handler) GetSingleRecipe(ctx context.Context, id, servings int) (*Recipe, error) {
+// GetSingleRecipe returns a recipe by its ID.
+func (h *Handler) GetSingleRecipe(ctx context.Context, id int) (*Recipe, error) {
 	// TODO: execute the following queries in a transaction
 	base, err := h.app.Queries.GetRecipeByID(ctx, int64(id))
 	if err != nil {
@@ -46,6 +45,7 @@ func (h *Handler) GetSingleRecipe(ctx context.Context, id, servings int) (*Recip
 		CreatedAt:           base.CreatedAt,
 		UpdatedAt:           base.UpdatedAt.Time,
 		Source:              base.Source.String,
+		BaseServings:        int(base.Servings),
 		Servings:            int(base.Servings),
 		ServingsDescription: base.ServingsDescription,
 	}
@@ -92,24 +92,6 @@ func (h *Handler) GetSingleRecipe(ctx context.Context, id, servings int) (*Recip
 		res.Steps = append(res.Steps, s)
 	}
 
-	// Let's calculate the actual amounts for the ingredients
-	if servings > 0 {
-		baseServings, newServings := float64(res.Servings), float64(servings)
-		res.Servings = servings
-
-		for i, ingredient := range res.Ingredients {
-			ingredient.Amount = ingredient.Amount / baseServings * newServings
-			res.Ingredients[i] = ingredient
-		}
-		for i, step := range res.Steps {
-			for j, ingredient := range step.Ingredients {
-				ingredient.Amount = ingredient.Amount / baseServings * newServings
-				step.Ingredients[j] = ingredient
-			}
-			res.Steps[i] = step
-		}
-	}
-
 	return res, nil
 }
 
@@ -127,12 +109,41 @@ type Recipe struct {
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 	Source              string
-	Servings            int
+	BaseServings        int // The number of servings that the recipe was written for.
+	Servings            int // The current amount of servings, calculated with WithServings.
 	ServingsDescription string
 
 	Ingredients []Ingredient
 	Steps       []Step
 }
+
+// WithServings recalculates the recipe with the given amount of servings.
+// Any value less or equal to zero is ignored.
+func (r *Recipe) WithServings(servings int) {
+	if r.BaseServings == 0 {
+		panic(fmt.Sprintf("base servings not set on recipe %d", r.ID))
+	}
+
+	if servings <= 0 || (r.BaseServings == servings) {
+		return
+	}
+
+	baseServings, newServings := float64(r.BaseServings), float64(servings)
+	r.Servings = servings
+
+	for i, ingredient := range r.Ingredients {
+		ingredient.Amount = ingredient.Amount / baseServings * newServings
+		r.Ingredients[i] = ingredient
+	}
+	for i, step := range r.Steps {
+		for j, ingredient := range step.Ingredients {
+			ingredient.Amount = ingredient.Amount / baseServings * newServings
+			step.Ingredients[j] = ingredient
+		}
+		r.Steps[i] = step
+	}
+}
+
 type Ingredient struct {
 	Name   string
 	Amount float64

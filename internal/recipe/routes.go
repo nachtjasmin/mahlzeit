@@ -31,19 +31,16 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				return
 			}
 
-			servings := 0
-			if servingsParam := r.URL.Query().Get("servings"); servingsParam != "" {
-				// We deliberately ignore any errors, and "handle" them by checking whether we have a valid int.
-				p, _ := strconv.Atoi(servingsParam)
-				if p > 0 {
-					servings = p
-				}
-			}
-
-			res, err := h.GetSingleRecipe(r.Context(), id, servings)
+			res, err := h.GetSingleRecipe(r.Context(), id)
 			if err != nil {
 				app.HandleServerError(w, err)
 				return
+			}
+
+			if servingsParam := r.URL.Query().Get("servings"); servingsParam != "" {
+				// We deliberately ignore any errors, and "handle" them by checking whether we have a valid int.
+				p, _ := strconv.Atoi(servingsParam)
+				res.WithServings(p)
 			}
 
 			if err := c.Templates.Render(w, "recipes/single.tmpl", res); err != nil {
