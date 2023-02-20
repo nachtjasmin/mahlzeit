@@ -24,7 +24,9 @@
                 {{ template "single_step" . }}
             {{ end }}
         </div>
-        <button type="button" data-hx-post="./edit/add_step" data-hx-swap="beforeend" data-hx-target="#steps">Schritt hinzufügen</button>
+        <button type="button" data-hx-post="./edit/add_step" data-hx-swap="beforeend" data-hx-target="#steps">Schritt
+            hinzufügen
+        </button>
     </header>
 {{ end }}
 
@@ -33,9 +35,9 @@
           action="/recipes/{{ .RecipeID }}/steps/{{ .ID }}">
         <input type="hidden" name="step_id" value="{{ .ID }}">
         <label for="step-{{ .ID }}-instruction">Anweisung</label>
-        <textarea rows="3" name="instruction" id="step-{{.ID}}-instruction">
-                    {{- .Instruction -}}
-                </textarea>
+        <textarea rows="3" name="instruction" id="step-{{ .ID }}-instruction">
+            {{- .Instruction -}}
+        </textarea>
 
         <label for="step-{{.ID}}-time">Zeit</label>
         <input type="text" id="step-{{.ID}}-time" name="time" value="{{.Time}}">
