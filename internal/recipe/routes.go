@@ -21,11 +21,11 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			recipes, err := h.GetAllRecipes(r.Context())
 			if err != nil {
-				app.HandleServerError(w, err)
+				app.HandleServerError(w, r, err)
 				return
 			}
 			if err := c.Templates.RenderPage(w, "recipes/index.tmpl", recipes); err != nil {
-				app.HandleServerError(w, err)
+				app.HandleServerError(w, r, err)
 				return
 			}
 		})
@@ -33,13 +33,13 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 			idStr := chi.URLParam(r, "id")
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
-				app.HandleClientError(w, err, http.StatusBadRequest)
+				app.HandleClientError(w, r, err, http.StatusBadRequest)
 				return
 			}
 
 			res, err := h.GetSingleRecipe(r.Context(), id)
 			if err != nil {
-				app.HandleServerError(w, err)
+				app.HandleServerError(w, r, err)
 				return
 			}
 
@@ -50,7 +50,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 			}
 
 			if err := c.Templates.RenderPage(w, "recipes/single.tmpl", res); err != nil {
-				app.HandleServerError(w, err)
+				app.HandleServerError(w, r, err)
 				return
 			}
 		})
@@ -58,18 +58,18 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 			idStr := chi.URLParam(r, "id")
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
-				app.HandleClientError(w, err, http.StatusBadRequest)
+				app.HandleClientError(w, r, err, http.StatusBadRequest)
 				return
 			}
 
 			res, err := h.GetSingleRecipe(r.Context(), id)
 			if err != nil {
-				app.HandleServerError(w, err)
+				app.HandleServerError(w, r, err)
 				return
 			}
 
 			if err := c.Templates.RenderPage(w, "recipes/edit.tmpl", res); err != nil {
-				app.HandleServerError(w, err)
+				app.HandleServerError(w, r, err)
 				return
 			}
 		})
@@ -77,12 +77,12 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 			idStr := chi.URLParam(r, "id")
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
-				app.HandleClientError(w, err, http.StatusBadRequest)
+				app.HandleClientError(w, r, err, http.StatusBadRequest)
 				return
 			}
 
 			if err := r.ParseForm(); err != nil {
-				app.HandleClientError(w, err, http.StatusBadRequest)
+				app.HandleClientError(w, r, err, http.StatusBadRequest)
 				return
 			}
 
@@ -92,7 +92,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				Description string
 			}{}
 			if err := bind.Request(r).All(&data); err != nil {
-				app.HandleClientError(w, err, http.StatusBadRequest)
+				app.HandleClientError(w, r, err, http.StatusBadRequest)
 				return
 			}
 
@@ -104,7 +104,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				Servings:    int32(data.Servings),
 				Description: data.Description,
 			}); err != nil {
-				app.HandleServerError(w, err)
+				app.HandleServerError(w, r, err)
 				return
 			}
 
@@ -114,13 +114,13 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 			idStr := chi.URLParam(r, "id")
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
-				app.HandleClientError(w, err, http.StatusBadRequest)
+				app.HandleClientError(w, r, err, http.StatusBadRequest)
 				return
 			}
 
 			emptyStep, err := c.Queries.AddNewEmptyStep(r.Context(), int64(id))
 			if err != nil {
-				app.HandleServerError(w, err)
+				app.HandleServerError(w, r, err)
 				return
 			}
 
@@ -134,7 +134,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 
 			if htmx.IsHTMXRequest(r) {
 				if err := c.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step", s); err != nil {
-					app.HandleServerError(w, err)
+					app.HandleServerError(w, r, err)
 					return
 				}
 			} else {
@@ -146,12 +146,12 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				idStr := chi.URLParam(r, "stepID")
 				id, err := strconv.Atoi(idStr)
 				if err != nil {
-					app.HandleClientError(w, err, http.StatusBadRequest)
+					app.HandleClientError(w, r, err, http.StatusBadRequest)
 					return
 				}
 
 				if err := r.ParseForm(); err != nil {
-					app.HandleClientError(w, err, http.StatusBadRequest)
+					app.HandleClientError(w, r, err, http.StatusBadRequest)
 					return
 				}
 
@@ -160,11 +160,11 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 					Time        string
 				}{}
 				if err := bind.Request(r).Field(&data.Instruction, "instruction"); err != nil {
-					app.HandleClientError(w, err, http.StatusBadRequest)
+					app.HandleClientError(w, r, err, http.StatusBadRequest)
 					return
 				}
 				if err := bind.Request(r).Field(&data.Time, "time"); err != nil {
-					app.HandleClientError(w, err, http.StatusBadRequest)
+					app.HandleClientError(w, r, err, http.StatusBadRequest)
 					return
 				}
 
@@ -176,7 +176,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 					Instruction: data.Instruction,
 					Time:        pgTime,
 				}); err != nil {
-					app.HandleServerError(w, err)
+					app.HandleServerError(w, r, err)
 					return
 				}
 
@@ -188,7 +188,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 						Time:        dur,
 						Ingredients: nil,
 					}); err != nil {
-						app.HandleServerError(w, err)
+						app.HandleServerError(w, r, err)
 						return
 					}
 				} else {
@@ -199,12 +199,12 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				idStr := chi.URLParam(r, "stepID")
 				id, err := strconv.Atoi(idStr)
 				if err != nil {
-					app.HandleClientError(w, err, http.StatusBadRequest)
+					app.HandleClientError(w, r, err, http.StatusBadRequest)
 					return
 				}
 
 				if err := c.Queries.DeleteStepByID(r.Context(), int64(id)); err != nil {
-					app.HandleServerError(w, err)
+					app.HandleServerError(w, r, err)
 					return
 				}
 
@@ -220,13 +220,13 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 
 				ingredients, err := c.Queries.GetAllIngredients(r.Context())
 				if err != nil {
-					app.HandleServerError(w, err)
+					app.HandleServerError(w, r, err)
 					return
 				}
 
 				units, err := c.Queries.GetAllUnits(r.Context())
 				if err != nil {
-					app.HandleServerError(w, err)
+					app.HandleServerError(w, r, err)
 					return
 				}
 
@@ -246,14 +246,14 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				idStr := chi.URLParam(r, "stepID")
 				stepID, err := strconv.Atoi(idStr)
 				if err != nil {
-					app.HandleClientError(w, err, http.StatusBadRequest)
+					app.HandleClientError(w, r, err, http.StatusBadRequest)
 					return
 				}
 
 				recipeIDStr := chi.URLParam(r, "id")
 				recipeID, err := strconv.Atoi(recipeIDStr)
 				if err != nil {
-					app.HandleClientError(w, err, http.StatusBadRequest)
+					app.HandleClientError(w, r, err, http.StatusBadRequest)
 					return
 				}
 
@@ -262,7 +262,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 
 				if htmx.IsHTMXRequest(r) {
 					if err := c.Templates.RenderTemplate(w, "recipes/edit.tmpl", "new_ingredient", data); err != nil {
-						app.HandleServerError(w, err)
+						app.HandleServerError(w, r, err)
 						return
 					}
 				} else {
@@ -273,14 +273,14 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				idStr := chi.URLParam(r, "stepID")
 				stepID, err := strconv.Atoi(idStr)
 				if err != nil {
-					app.HandleClientError(w, err, http.StatusBadRequest)
+					app.HandleClientError(w, r, err, http.StatusBadRequest)
 					return
 				}
 
 				recipeID := parseIntWithDefault(chi.URLParam(r, "id"))
 
 				if err := r.ParseForm(); err != nil {
-					app.HandleClientError(w, err, http.StatusBadRequest)
+					app.HandleClientError(w, r, err, http.StatusBadRequest)
 					return
 				}
 				data := struct {
@@ -313,13 +313,13 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 					Amount:        amount,
 					Note:          data.Note,
 				}); err != nil {
-					app.HandleServerError(w, err)
+					app.HandleServerError(w, r, err)
 					return
 				}
 
 				ingredientName, err := c.Queries.GetIngredientNameByID(r.Context(), int64(data.Ingredient))
 				if err != nil {
-					app.HandleServerError(w, err)
+					app.HandleServerError(w, r, err)
 					return
 				}
 
@@ -331,7 +331,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 						StepID:   stepID,
 						RecipeID: recipeID,
 					}); err != nil {
-						app.HandleServerError(w, err)
+						app.HandleServerError(w, r, err)
 						return
 					}
 				} else {
@@ -348,7 +348,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 					StepID:        int64(stepID),
 					IngredientsID: int64(ingredientID),
 				}); err != nil {
-					app.HandleServerError(w, err)
+					app.HandleServerError(w, r, err)
 					return
 				}
 			})

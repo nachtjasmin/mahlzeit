@@ -79,3 +79,8 @@ func FromContext(ctx context.Context) *zap.Logger {
 	return logger
 }
 
+// FromRequest extracts a logger from the current request context, if it's injected there.
+// Otherwise, a no-op logger is returned.
+func FromRequest(r *http.Request) *zap.Logger {
+	return FromContext(r.Context())
+}
