@@ -72,6 +72,7 @@ func (h *Handler) GetSingleRecipe(ctx context.Context, id int) (*Recipe, error) 
 	for _, step := range steps {
 		s := Step{
 			ID:          int(step.ID),
+			RecipeID:    res.ID,
 			Instruction: step.Instruction,
 		}
 		_ = step.StepTime.AssignTo(&s.Time)
@@ -154,6 +155,7 @@ type Ingredient struct {
 }
 type Step struct {
 	ID          int
+	RecipeID    int
 	Instruction string
 	Time        time.Duration
 	Ingredients []Ingredient

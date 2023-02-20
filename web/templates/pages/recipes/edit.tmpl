@@ -19,33 +19,36 @@
             <button type="submit">Änderungen speichern</button>
         </form>
         <h2>Schritte</h2>
-        {{ $recipeID := .ID }}
-        {{ range $i, $step := .Steps }}
+        {{ range .Steps }}
             {{ template "single_step" . }}
-            <form method="post"
-                  action="/recipes/{{$recipeID}}/steps/{{ .ID }}"
-                  data-hx-swap="none">
-                <input type="hidden" name="step_id" value="{{ .ID }}">
-                <label for="step-{{$i}}-instruction">Anweisung</label>
-                <textarea rows="3" name="instruction" id="step-{{$i}}-instruction">
-                    {{- .Instruction -}}
-                </textarea>
-
-                <label for="step-{{$i}}-time">Zeit</label>
-                <input type="text" id="step-{{$i}}-time" name="time" value="{{.Time}}">
-
-                <button type="submit"
-                        data-hx-delete="/recipes/{{$recipeID}}/steps/{{.ID}}"
-                        data-hx-target="closest form"
-                        data-hx-confirm="Bist du sicher?"
-                        data-hx-swap="outerHTML">Löschen
-                </button>
-                <button type="submit">Speichern</button>
-            </form>
         {{ end }}
     </header>
 {{ end }}
 
 {{ define "single_step" }}
+    <form method="post"
+          action="/recipes/{{ .RecipeID }}/steps/{{ .ID }}">
+        <input type="hidden" name="step_id" value="{{ .ID }}">
+        <label for="step-{{ .ID }}-instruction">Anweisung</label>
+        <textarea rows="3" name="instruction" id="step-{{.ID}}-instruction">
+                    {{- .Instruction -}}
+                </textarea>
 
+        <label for="step-{{.ID}}-time">Zeit</label>
+        <input type="text" id="step-{{.ID}}-time" name="time" value="{{.Time}}">
+
+        <button type="submit"
+                data-hx-delete="/recipes/{{.RecipeID}}/steps/{{.ID}}"
+                data-hx-target="closest form"
+                data-hx-confirm="Bist du sicher?"
+                data-hx-swap="outerHTML">
+            Löschen
+        </button>
+        <button type="submit"
+                data-hx-post="/recipes/{{.RecipeID}}/steps/{{.ID}}"
+                data-hx-target="closest form"
+                data-hx-swap="outerHTML">
+            Speichern
+        </button>
+    </form>
 {{ end }}

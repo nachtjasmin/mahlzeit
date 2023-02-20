@@ -23,7 +23,7 @@ func TestTemplates_Render(t *testing.T) {
 
 	t.Run("template rendering without any files", func(t *testing.T) {
 		templateName := "not_existing.tmpl"
-		err := tmpl.Render(io.Discard, templateName, nil)
+		err := tmpl.RenderPage(io.Discard, templateName, nil)
 		if err == nil {
 			t.Fatalf("expected error, got none")
 		}
@@ -53,7 +53,7 @@ func TestTemplates_Render(t *testing.T) {
 	const expectedContent = "testPage"
 	t.Run("test page is rendered", func(t *testing.T) {
 		var b bytes.Buffer
-		err := tmpl.Render(&b, testPageName, nil)
+		err := tmpl.RenderPage(&b, testPageName, nil)
 		if err != nil {
 			t.Fatalf("page rendering failed: %s", err)
 		}
@@ -77,7 +77,7 @@ func TestTemplates_Render(t *testing.T) {
 		}
 
 		var b bytes.Buffer
-		err := tmpl.Render(&b, testPageName, nil)
+		err := tmpl.RenderPage(&b, testPageName, nil)
 		if err != nil {
 			t.Fatalf("page rendering failed: %s", err)
 		}

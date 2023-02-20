@@ -32,10 +32,18 @@ func NewTemplates(templateDir string) Templates {
 	return Templates{dir: templateDir}
 }
 
-// Render renders a template by the name. If the internal cache is built, e.g. during startup,
+// RenderPage renders a page by the name. If the internal cache is built, e.g. during startup,
 // it's used. Otherwise, templates are rendered with the given data on demand. Any errors
 // are wrapped inside a [TemplateRenderingError] for further analysis.
-func (tc *Templates) Render(w io.Writer, page string, data any) error {
+func (tc *Templates) RenderPage(w io.Writer, page string, data any) error {
+	return tc.RenderTemplate(w, page, "base", data)
+}
+
+// RenderTemplate is used for rendering specific templates on a given page.
+// If the internal cache is built, e.g. during startup, it's used.
+// Otherwise, templates are rendered with the given data on demand. Any errors
+// are wrapped inside a [TemplateRenderingError] for further analysis.
+func (tc *Templates) RenderTemplate(w io.Writer, page string, template string, data any) error {
 	// If we don't have the templates cached, build them on demand.
 	if tc.cache == nil {
 		tmpl, err := buildPageTemplate(tc.dir, page)
@@ -43,7 +51,7 @@ func (tc *Templates) Render(w io.Writer, page string, data any) error {
 			return TemplateRenderingError{err: err, TemplateName: page}
 		}
 
-		if err := safeRenderTemplate(tmpl, w, data); err != nil {
+		if err := safeRenderTemplate(tmpl, w, data, template); err != nil {
 			return TemplateRenderingError{err: err, TemplateName: page}
 		}
 		return nil
@@ -55,7 +63,7 @@ func (tc *Templates) Render(w io.Writer, page string, data any) error {
 		return fmt.Errorf("the template %s does not exist", page)
 	}
 
-	if err := safeRenderTemplate(ts, w, data); err != nil {
+	if err := safeRenderTemplate(ts, w, data, template); err != nil {
 		return TemplateRenderingError{err: err, TemplateName: page}
 	}
 	return nil
@@ -106,12 +114,12 @@ func buildPageTemplate(templateDir, page string) (*template.Template, error) {
 
 // safeRenderTemplate renders a page with the given data to the passed writer, only if the rendering process
 // is successful. Any runtime errors are wrapped inside a TemplateRenderingError.
-func safeRenderTemplate(t *template.Template, w io.Writer, data any) error {
+func safeRenderTemplate(t *template.Template, w io.Writer, data any, templateName string) error {
 	// Because any rendering error that occurs on runtime can result in incomplete outputs,
 	// we write the template to a buffer first. If that's successful, we can copy it to the writer.
 	var buf bytes.Buffer
 
-	if err := t.ExecuteTemplate(&buf, "base", data); err != nil {
+	if err := t.ExecuteTemplate(&buf, templateName, data); err != nil {
 		return fmt.Errorf("runtime error on template execution: %w", err)
 	}
 

@@ -7,6 +7,7 @@ import (
 
 	"codeberg.org/mahlzeit/mahlzeit/db/queries"
 	"codeberg.org/mahlzeit/mahlzeit/internal/app"
+	"codeberg.org/mahlzeit/mahlzeit/internal/http/htmx"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgtype"
 	"github.com/robfig/bind"
@@ -22,7 +23,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				app.HandleServerError(w, err)
 				return
 			}
-			if err := c.Templates.Render(w, "recipes/index.tmpl", recipes); err != nil {
+			if err := c.Templates.RenderPage(w, "recipes/index.tmpl", recipes); err != nil {
 				app.HandleServerError(w, err)
 				return
 			}
@@ -47,7 +48,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				res.WithServings(p)
 			}
 
-			if err := c.Templates.Render(w, "recipes/single.tmpl", res); err != nil {
+			if err := c.Templates.RenderPage(w, "recipes/single.tmpl", res); err != nil {
 				app.HandleServerError(w, err)
 				return
 			}
@@ -66,7 +67,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				return
 			}
 
-			if err := c.Templates.Render(w, "recipes/edit.tmpl", res); err != nil {
+			if err := c.Templates.RenderPage(w, "recipes/edit.tmpl", res); err != nil {
 				app.HandleServerError(w, err)
 				return
 			}
@@ -147,8 +148,20 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 					return
 				}
 
-				// todo: if htmx, then respond with single step HTML
-				http.Redirect(w, r, "/recipes/"+chi.URLParam(r, "id"), http.StatusFound)
+				if htmx.IsHTMXRequest(r) {
+					if err := c.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step", Step{
+						ID:          id,
+						RecipeID:    0,
+						Instruction: data.Instruction,
+						Time:        dur,
+						Ingredients: nil,
+					}); err != nil {
+						app.HandleServerError(w, err)
+						return
+					}
+				} else {
+					http.Redirect(w, r, "/recipes/"+chi.URLParam(r, "id"), http.StatusFound)
+				}
 			})
 			r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
 				idStr := chi.URLParam(r, "stepID")
