@@ -149,6 +149,7 @@ func (r *Recipe) WithServings(servings int) {
 }
 
 type Ingredient struct {
+	ID     int
 	Name   string
 	Amount float64
 	Note   string
@@ -159,4 +160,8 @@ type Step struct {
 	Instruction string
 	Time        time.Duration
 	Ingredients []Ingredient
+}
+type Unit struct {
+	ID   int
+	Name string
 }

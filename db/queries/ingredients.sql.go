@@ -7,30 +7,73 @@ package queries
 
 import (
 	"context"
+
+	"github.com/jackc/pgtype"
 )
 
+const addIngredientToStep = `-- name: AddIngredientToStep :exec
+insert into step_ingredients (step_id, ingredients_id, unit_id, amount, note)
+values ($1,
+		$2,
+		nullif($3, 0),
+		$4,
+		$5)
+`
+
+type AddIngredientToStepParams struct {
+	StepID        int64
+	IngredientsID int64
+	UnitID        interface{}
+	Amount        pgtype.Numeric
+	Note          string
+}
+
+func (q *Queries) AddIngredientToStep(ctx context.Context, arg AddIngredientToStepParams) error {
+	_, err := q.db.Exec(ctx, addIngredientToStep,
+		arg.StepID,
+		arg.IngredientsID,
+		arg.UnitID,
+		arg.Amount,
+		arg.Note,
+	)
+	return err
+}
+
 const getAllIngredients = `-- name: GetAllIngredients :many
-select name
+select id, name
 from ingredients
 order by id
 `
 
-func (q *Queries) GetAllIngredients(ctx context.Context) ([]string, error) {
+func (q *Queries) GetAllIngredients(ctx context.Context) ([]Ingredient, error) {
 	rows, err := q.db.Query(ctx, getAllIngredients)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []string
+	var items []Ingredient
 	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
+		var i Ingredient
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
-		items = append(items, name)
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getIngredientNameByID = `-- name: GetIngredientNameByID :one
+select name
+from ingredients
+where id = $1
+`
+
+func (q *Queries) GetIngredientNameByID(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRow(ctx, getIngredientNameByID, id)
+	var name string
+	err := row.Scan(&name)
+	return name, err
 }
