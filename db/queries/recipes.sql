@@ -19,7 +19,8 @@ from recipes
 where id = sqlc.arg(id);
 
 -- name: GetStepsForRecipeByID :many
-select instruction,
+select steps.id,
+	   instruction,
 	   "time"  as step_time,
 	   -- To get the ingredients within the same query and avoiding n+1 query pipelines,
 	   -- those are built as a JSON object using jsonb_build_object.
@@ -34,7 +35,7 @@ from steps
 		 left join step_ingredients on steps.id = step_ingredients.step_id
 		 left join ingredients on step_ingredients.ingredients_id = ingredients.id
 where steps.recipe_id = sqlc.arg(id)
-group by "time", instruction;
+group by steps.id, "time", instruction;
 
 
 -- name: GetTotalIngredientsForRecipe :many
@@ -53,4 +54,15 @@ set name        = sqlc.arg('name'),
 	servings    = sqlc.arg('servings'),
 	description = sqlc.arg('description'),
 	updated_at  = now()
+where id = sqlc.arg('id');
+
+-- name: DeleteStepByID :exec
+delete
+from steps
+where id = sqlc.arg('id');
+
+-- name: UpdateStepByID :exec
+update steps
+set instruction = sqlc.arg('instruction'),
+	time        = sqlc.arg('time')
 where id = sqlc.arg('id');

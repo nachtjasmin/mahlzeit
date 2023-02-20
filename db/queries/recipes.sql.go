@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgtype"
 )
 
+const deleteStepByID = `-- name: DeleteStepByID :exec
+delete
+from steps
+where id = $1
+`
+
+func (q *Queries) DeleteStepByID(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteStepByID, id)
+	return err
+}
+
 const getAllRecipesByName = `-- name: GetAllRecipesByName :many
 select id, name
 from recipes
@@ -78,7 +89,8 @@ func (q *Queries) GetRecipeByID(ctx context.Context, id int64) (Recipe, error) {
 }
 
 const getStepsForRecipeByID = `-- name: GetStepsForRecipeByID :many
-select instruction,
+select steps.id,
+	   instruction,
 	   "time"  as step_time,
 	   -- To get the ingredients within the same query and avoiding n+1 query pipelines,
 	   -- those are built as a JSON object using jsonb_build_object.
@@ -93,10 +105,11 @@ from steps
 		 left join step_ingredients on steps.id = step_ingredients.step_id
 		 left join ingredients on step_ingredients.ingredients_id = ingredients.id
 where steps.recipe_id = $1
-group by "time", instruction
+group by steps.id, "time", instruction
 `
 
 type GetStepsForRecipeByIDRow struct {
+	ID          int64
 	Instruction string
 	StepTime    pgtype.Interval
 	Ingredients pgtype.JSONB
@@ -111,7 +124,12 @@ func (q *Queries) GetStepsForRecipeByID(ctx context.Context, id int64) ([]GetSte
 	var items []GetStepsForRecipeByIDRow
 	for rows.Next() {
 		var i GetStepsForRecipeByIDRow
-		if err := rows.Scan(&i.Instruction, &i.StepTime, &i.Ingredients); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Instruction,
+			&i.StepTime,
+			&i.Ingredients,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -181,5 +199,23 @@ func (q *Queries) UpdateBasicRecipeInformation(ctx context.Context, arg UpdateBa
 		arg.Description,
 		arg.ID,
 	)
+	return err
+}
+
+const updateStepByID = `-- name: UpdateStepByID :exec
+update steps
+set instruction = $1,
+	time        = $2
+where id = $3
+`
+
+type UpdateStepByIDParams struct {
+	Instruction string
+	Time        pgtype.Interval
+	ID          int64
+}
+
+func (q *Queries) UpdateStepByID(ctx context.Context, arg UpdateStepByIDParams) error {
+	_, err := q.db.Exec(ctx, updateStepByID, arg.Instruction, arg.Time, arg.ID)
 	return err
 }

@@ -3,10 +3,12 @@ package recipe
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"codeberg.org/mahlzeit/mahlzeit/db/queries"
 	"codeberg.org/mahlzeit/mahlzeit/internal/app"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgtype"
 	"github.com/robfig/bind"
 )
 
@@ -105,6 +107,64 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 			}
 
 			http.Redirect(w, r, "/recipes/"+idStr, http.StatusFound)
+		})
+		r.Route("/{id}/steps/{stepID}", func(r chi.Router) {
+			r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+				idStr := chi.URLParam(r, "stepID")
+				id, err := strconv.Atoi(idStr)
+				if err != nil {
+					app.HandleClientError(w, http.StatusBadRequest, err)
+					return
+				}
+
+				if err := r.ParseForm(); err != nil {
+					app.HandleClientError(w, http.StatusBadRequest, err)
+					return
+				}
+
+				data := struct {
+					Instruction string
+					Time        string
+				}{}
+				if err := bind.Request(r).Field(&data.Instruction, "instruction"); err != nil {
+					app.HandleClientError(w, http.StatusBadRequest, err)
+					return
+				}
+				if err := bind.Request(r).Field(&data.Time, "time"); err != nil {
+					app.HandleClientError(w, http.StatusBadRequest, err)
+					return
+				}
+
+				var pgTime pgtype.Interval
+				dur, _ := time.ParseDuration(data.Time)
+				_ = pgTime.Set(dur)
+				if err := c.Queries.UpdateStepByID(r.Context(), queries.UpdateStepByIDParams{
+					ID:          int64(id),
+					Instruction: data.Instruction,
+					Time:        pgTime,
+				}); err != nil {
+					app.HandleServerError(w, err)
+					return
+				}
+
+				// todo: if htmx, then respond with single step HTML
+				http.Redirect(w, r, "/recipes/"+chi.URLParam(r, "id"), http.StatusFound)
+			})
+			r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
+				idStr := chi.URLParam(r, "stepID")
+				id, err := strconv.Atoi(idStr)
+				if err != nil {
+					app.HandleClientError(w, http.StatusBadRequest, err)
+					return
+				}
+
+				if err := c.Queries.DeleteStepByID(r.Context(), int64(id)); err != nil {
+					app.HandleServerError(w, err)
+					return
+				}
+
+				w.WriteHeader(200)
+			})
 		})
 	}
 }

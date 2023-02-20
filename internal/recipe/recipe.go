@@ -70,7 +70,10 @@ func (h *Handler) GetSingleRecipe(ctx context.Context, id int) (*Recipe, error) 
 	}
 
 	for _, step := range steps {
-		s := Step{Instruction: step.Instruction}
+		s := Step{
+			ID:          int(step.ID),
+			Instruction: step.Instruction,
+		}
 		_ = step.StepTime.AssignTo(&s.Time)
 
 		if step.Ingredients.Status == pgtype.Present {
@@ -150,6 +153,7 @@ type Ingredient struct {
 	Note   string
 }
 type Step struct {
+	ID          int
 	Instruction string
 	Time        time.Duration
 	Ingredients []Ingredient

@@ -18,5 +18,34 @@
             </div>
             <button type="submit">Änderungen speichern</button>
         </form>
+        <h2>Schritte</h2>
+        {{ $recipeID := .ID }}
+        {{ range $i, $step := .Steps }}
+            {{ template "single_step" . }}
+            <form method="post"
+                  action="/recipes/{{$recipeID}}/steps/{{ .ID }}"
+                  data-hx-swap="none">
+                <input type="hidden" name="step_id" value="{{ .ID }}">
+                <label for="step-{{$i}}-instruction">Anweisung</label>
+                <textarea rows="3" name="instruction" id="step-{{$i}}-instruction">
+                    {{- .Instruction -}}
+                </textarea>
+
+                <label for="step-{{$i}}-time">Zeit</label>
+                <input type="text" id="step-{{$i}}-time" name="time" value="{{.Time}}">
+
+                <button type="submit"
+                        data-hx-delete="/recipes/{{$recipeID}}/steps/{{.ID}}"
+                        data-hx-target="closest form"
+                        data-hx-confirm="Bist du sicher?"
+                        data-hx-swap="outerHTML">Löschen
+                </button>
+                <button type="submit">Speichern</button>
+            </form>
+        {{ end }}
     </header>
+{{ end }}
+
+{{ define "single_step" }}
+
 {{ end }}
