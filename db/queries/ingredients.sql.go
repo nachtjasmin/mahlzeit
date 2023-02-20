@@ -39,6 +39,23 @@ func (q *Queries) AddIngredientToStep(ctx context.Context, arg AddIngredientToSt
 	return err
 }
 
+const deleteIngredientFromStep = `-- name: DeleteIngredientFromStep :exec
+delete
+from step_ingredients
+where step_id = $1
+  and ingredients_id = $2
+`
+
+type DeleteIngredientFromStepParams struct {
+	StepID        int64
+	IngredientsID int64
+}
+
+func (q *Queries) DeleteIngredientFromStep(ctx context.Context, arg DeleteIngredientFromStepParams) error {
+	_, err := q.db.Exec(ctx, deleteIngredientFromStep, arg.StepID, arg.IngredientsID)
+	return err
+}
+
 const getAllIngredients = `-- name: GetAllIngredients :many
 select id, name
 from ingredients

@@ -27,6 +27,9 @@ select steps.id,
 	   -- Because the values can have NULL values due to the left join below, we strip those values
 	   -- with jsonb_strip_nulls. And in the end, they are grouped inside an array with jsonb_agg.
 	   jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+			   'id', ingredients.id,
+	       	   'stepID', steps.id,
+	       	   'recipeID', steps.recipe_id,
 			   'name', ingredients.name,
 			   'amount', step_ingredients.amount,
 			   'note', step_ingredients.note

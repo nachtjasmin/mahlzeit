@@ -47,8 +47,8 @@
                 {{ end }}
             </ul>
             <button type="submit" data-hx-post="/recipes/{{ .RecipeID }}/steps/{{ .ID }}/add_ingredient"
-            data-hx-target="#step-{{.ID}}-ingredients"
-            data-hx-swap="beforeend">
+                    data-hx-target="#step-{{.ID}}-ingredients"
+                    data-hx-swap="beforeend">
                 Zutat hinzufügen
             </button>
         </section>
@@ -80,6 +80,11 @@
             {{ with .Note }}
                 <p>Notiz: {{ . }}</p>
             {{ end }}
+            <button data-hx-delete="/recipes/{{.RecipeID}}/steps/{{ .StepID }}/ingredients/{{ .ID }}"
+                    data-hx-target="closest li"
+                    data-hx-swap="outerHTML">
+                Löschen
+            </button>
         </div>
     </li>
 {{ end }}

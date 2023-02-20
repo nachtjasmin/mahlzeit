@@ -153,6 +153,10 @@ type Ingredient struct {
 	Name   string
 	Amount float64
 	Note   string
+
+	// only used for the template "ingredient" and its delete button
+	RecipeID int
+	StepID   int
 }
 type Step struct {
 	ID          int

@@ -277,6 +277,8 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 					return
 				}
 
+				recipeID := parseIntWithDefault(chi.URLParam(r, "id"))
+
 				if err := r.ParseForm(); err != nil {
 					app.HandleClientError(w, http.StatusBadRequest, err)
 					return
@@ -322,16 +324,32 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				}
 
 				if htmx.IsHTMXRequest(r) {
-					if err := c.Templates.RenderTemplate(w, "recipes/edit.tmpl", "ingredient", map[string]any{
-						"Name":   ingredientName,
-						"Amount": data.Amount,
-						"Note":   data.Note,
+					if err := c.Templates.RenderTemplate(w, "recipes/edit.tmpl", "ingredient", Ingredient{
+						Name:     ingredientName,
+						Amount:   float64(data.Amount),
+						Note:     data.Note,
+						StepID:   stepID,
+						RecipeID: recipeID,
 					}); err != nil {
 						app.HandleServerError(w, err)
 						return
 					}
 				} else {
 					panic("progressive enhancement not yet implemented")
+				}
+			})
+			r.Delete("/ingredients/{ingredientID}", func(w http.ResponseWriter, r *http.Request) {
+				var (
+					stepID       = parseIntWithDefault(chi.URLParam(r, "stepID"))
+					ingredientID = parseIntWithDefault(chi.URLParam(r, "ingredientID"))
+				)
+
+				if err := c.Queries.DeleteIngredientFromStep(r.Context(), queries.DeleteIngredientFromStepParams{
+					StepID:        int64(stepID),
+					IngredientsID: int64(ingredientID),
+				}); err != nil {
+					app.HandleServerError(w, err)
+					return
 				}
 			})
 		})
