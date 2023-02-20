@@ -13,6 +13,7 @@ import (
 
 	"codeberg.org/mahlzeit/mahlzeit/db/queries"
 	"codeberg.org/mahlzeit/mahlzeit/internal/app"
+	"codeberg.org/mahlzeit/mahlzeit/internal/templates"
 	"github.com/BurntSushi/toml"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
@@ -59,7 +60,7 @@ func run(ctx context.Context, args []string) error {
 	}
 
 	app := &app.Application{
-		Templates: app.NewTemplates(cfg.Web.TemplateDir),
+		Templates: templates.NewTemplates(cfg.Web.TemplateDir),
 		Queries:   queries.New(pool),
 		Logger:    logger,
 	}
