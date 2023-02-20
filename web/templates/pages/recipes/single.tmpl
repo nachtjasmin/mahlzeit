@@ -20,7 +20,7 @@
         <h2>Zutaten</h2>
         <ul>
             {{ range .Ingredients }}
-                <li>{{ round .Amount 2 }} {{ .Name }}</li>
+                <li>{{ round .Amount 2 }} {{ .UnitName }} {{ .Name }}</li>
             {{ end }}
         </ul>
     </aside>
@@ -44,7 +44,7 @@
                         Zutaten:
                         <ul>
                             {{ range .Ingredients }}
-                                <li>{{ round .Amount 2 }} {{ .Name }} ({{ .Note }})</li>
+                                <li>{{ round .Amount 2 }} {{ .UnitName }} {{ .Name }} ({{ .Note }})</li>
                             {{ end }}
                         </ul>
                     </div>

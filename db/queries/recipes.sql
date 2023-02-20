@@ -28,8 +28,9 @@ select steps.id,
 	   -- with jsonb_strip_nulls. And in the end, they are grouped inside an array with jsonb_agg.
 	   jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
 			   'id', ingredients.id,
-	       	   'stepID', steps.id,
-	       	   'recipeID', steps.recipe_id,
+			   'stepID', steps.id,
+			   'recipeID', steps.recipe_id,
+			   'unitName', units.name,
 			   'name', ingredients.name,
 			   'amount', step_ingredients.amount,
 			   'note', step_ingredients.note
@@ -37,18 +38,21 @@ select steps.id,
 from steps
 		 left join step_ingredients on steps.id = step_ingredients.step_id
 		 left join ingredients on step_ingredients.ingredients_id = ingredients.id
+		 left join units on units.id = step_ingredients.unit_id
 where steps.recipe_id = sqlc.arg(id)
 group by steps.id, "time", instruction;
 
 
 -- name: GetTotalIngredientsForRecipe :many
 select ingredients.name,
+	   units.name                   as unit_name,
 	   sum(step_ingredients.amount) as total_amount
 from steps
 		 inner join step_ingredients on steps.id = step_ingredients.step_id
 		 inner join ingredients on ingredients.id = step_ingredients.ingredients_id
-where steps.recipe_id = sqlc.arg(id)
-group by ingredients.name
+		 left join units on units.id = step_ingredients.unit_id
+where steps.recipe_id = sqlc.arg('id')
+group by ingredients.name, units.name
 order by ingredients.name, total_amount desc;
 
 -- name: UpdateBasicRecipeInformation :exec

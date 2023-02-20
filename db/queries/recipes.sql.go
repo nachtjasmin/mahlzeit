@@ -7,6 +7,7 @@ package queries
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/jackc/pgtype"
 )
@@ -122,8 +123,9 @@ select steps.id,
 	   -- with jsonb_strip_nulls. And in the end, they are grouped inside an array with jsonb_agg.
 	   jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
 			   'id', ingredients.id,
-	       	   'stepID', steps.id,
-	       	   'recipeID', steps.recipe_id,
+			   'stepID', steps.id,
+			   'recipeID', steps.recipe_id,
+			   'unitName', units.name,
 			   'name', ingredients.name,
 			   'amount', step_ingredients.amount,
 			   'note', step_ingredients.note
@@ -131,6 +133,7 @@ select steps.id,
 from steps
 		 left join step_ingredients on steps.id = step_ingredients.step_id
 		 left join ingredients on step_ingredients.ingredients_id = ingredients.id
+		 left join units on units.id = step_ingredients.unit_id
 where steps.recipe_id = $1
 group by steps.id, "time", instruction
 `
@@ -169,17 +172,20 @@ func (q *Queries) GetStepsForRecipeByID(ctx context.Context, id int64) ([]GetSte
 
 const getTotalIngredientsForRecipe = `-- name: GetTotalIngredientsForRecipe :many
 select ingredients.name,
+	   units.name                   as unit_name,
 	   sum(step_ingredients.amount) as total_amount
 from steps
 		 inner join step_ingredients on steps.id = step_ingredients.step_id
 		 inner join ingredients on ingredients.id = step_ingredients.ingredients_id
+		 left join units on units.id = step_ingredients.unit_id
 where steps.recipe_id = $1
-group by ingredients.name
+group by ingredients.name, units.name
 order by ingredients.name, total_amount desc
 `
 
 type GetTotalIngredientsForRecipeRow struct {
 	Name        string
+	UnitName    sql.NullString
 	TotalAmount int64
 }
 
@@ -192,7 +198,7 @@ func (q *Queries) GetTotalIngredientsForRecipe(ctx context.Context, id int64) ([
 	var items []GetTotalIngredientsForRecipeRow
 	for rows.Next() {
 		var i GetTotalIngredientsForRecipeRow
-		if err := rows.Scan(&i.Name, &i.TotalAmount); err != nil {
+		if err := rows.Scan(&i.Name, &i.UnitName, &i.TotalAmount); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

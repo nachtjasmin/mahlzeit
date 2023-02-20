@@ -59,8 +59,9 @@ func (h *Handler) GetSingleRecipe(ctx context.Context, id int) (*Recipe, error) 
 
 	for _, ingredient := range ingredients {
 		res.Ingredients = append(res.Ingredients, Ingredient{
-			Name:   ingredient.Name,
-			Amount: float64(ingredient.TotalAmount),
+			Name:     ingredient.Name,
+			Amount:   float64(ingredient.TotalAmount),
+			UnitName: ingredient.UnitName.String,
 		})
 	}
 
@@ -149,10 +150,11 @@ func (r *Recipe) WithServings(servings int) {
 }
 
 type Ingredient struct {
-	ID     int
-	Name   string
-	Amount float64
-	Note   string
+	ID       int
+	Name     string
+	Amount   float64
+	Note     string
+	UnitName string
 
 	// only used for the template "ingredient" and its delete button
 	RecipeID int
