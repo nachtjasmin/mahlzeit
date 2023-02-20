@@ -19,9 +19,12 @@
             <button type="submit">Änderungen speichern</button>
         </form>
         <h2>Schritte</h2>
-        {{ range .Steps }}
-            {{ template "single_step" . }}
-        {{ end }}
+        <div id="steps">
+            {{ range .Steps }}
+                {{ template "single_step" . }}
+            {{ end }}
+        </div>
+        <button type="button" data-hx-post="./edit/add_step" data-hx-swap="beforeend" data-hx-target="#steps">Schritt hinzufügen</button>
     </header>
 {{ end }}
 

@@ -109,6 +109,37 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 
 			http.Redirect(w, r, "/recipes/"+idStr, http.StatusFound)
 		})
+		r.Post("/{id}/edit/add_step", func(w http.ResponseWriter, r *http.Request) {
+			idStr := chi.URLParam(r, "id")
+			id, err := strconv.Atoi(idStr)
+			if err != nil {
+				app.HandleClientError(w, http.StatusBadRequest, err)
+				return
+			}
+
+			emptyStep, err := c.Queries.AddNewEmptyStep(r.Context(), int64(id))
+			if err != nil {
+				app.HandleServerError(w, err)
+				return
+			}
+
+			s := Step{
+				ID:          int(emptyStep.ID),
+				RecipeID:    int(emptyStep.RecipeID),
+				Instruction: emptyStep.Instruction,
+				Ingredients: nil,
+			}
+			_ = emptyStep.Time.AssignTo(&s.Time)
+
+			if htmx.IsHTMXRequest(r) {
+				if err := c.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step", s); err != nil {
+					app.HandleServerError(w, err)
+					return
+				}
+			} else {
+				http.Redirect(w, r, "", http.StatusFound)
+			}
+		})
 		r.Route("/{id}/steps/{stepID}", func(r chi.Router) {
 			r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 				idStr := chi.URLParam(r, "stepID")

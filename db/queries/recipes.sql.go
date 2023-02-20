@@ -11,6 +11,30 @@ import (
 	"github.com/jackc/pgtype"
 )
 
+const addNewEmptyStep = `-- name: AddNewEmptyStep :one
+insert into steps (recipe_id, sort_order, instruction, time)
+select $1,
+	   max(sort_order) + 1,
+	   '',
+	   '0 seconds'
+from steps
+where recipe_id = $1
+returning steps.id, steps.recipe_id, steps.sort_order, steps.instruction, steps.time
+`
+
+func (q *Queries) AddNewEmptyStep(ctx context.Context, recipeID int64) (Step, error) {
+	row := q.db.QueryRow(ctx, addNewEmptyStep, recipeID)
+	var i Step
+	err := row.Scan(
+		&i.ID,
+		&i.RecipeID,
+		&i.SortOrder,
+		&i.Instruction,
+		&i.Time,
+	)
+	return i, err
+}
+
 const deleteStepByID = `-- name: DeleteStepByID :exec
 delete
 from steps

@@ -66,3 +66,13 @@ update steps
 set instruction = sqlc.arg('instruction'),
 	time        = sqlc.arg('time')
 where id = sqlc.arg('id');
+
+-- name: AddNewEmptyStep :one
+insert into steps (recipe_id, sort_order, instruction, time)
+select sqlc.arg('recipe_id'),
+	   max(sort_order) + 1,
+	   '',
+	   '0 seconds'
+from steps
+where recipe_id = sqlc.arg('recipe_id')
+returning steps.*;
