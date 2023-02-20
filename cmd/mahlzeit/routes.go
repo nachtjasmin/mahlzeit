@@ -8,6 +8,7 @@ import (
 	"codeberg.org/mahlzeit/mahlzeit/internal/recipe"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"go.uber.org/zap"
 )
 
 // routes returns the [chi.Mux] that is going to be used for our HTTP handlers.
@@ -20,7 +21,7 @@ func routes(c *app.Application) *chi.Mux {
 	r.Use(
 		middleware.RequestID,
 		middleware.RealIP,
-		middleware.Logger,
+		zapLoggingMiddleware(c.Logger),
 		middleware.Recoverer,
 		middleware.CleanPath,
 	)
@@ -38,4 +39,29 @@ func routes(c *app.Application) *chi.Mux {
 	r.Route("/recipes", recipe.Handler(c))
 
 	return r
+}
+
+func zapLoggingMiddleware(logger *zap.Logger) func(next http.Handler) http.Handler {
+	if logger == nil {
+		return func(next http.Handler) http.Handler { return next }
+	}
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			t1 := time.Now()
+			defer func() {
+				reqLogger := logger.With(
+					zap.String("proto", r.Proto),
+					zap.String("path", r.URL.Path),
+					zap.String("request_id", middleware.GetReqID(r.Context())),
+					zap.Duration("duration", time.Since(t1)),
+					zap.Int("status", ww.Status()),
+					zap.Int("response_bytes", ww.BytesWritten()),
+				)
+				reqLogger.Info("HTTP request served")
+			}()
+			next.ServeHTTP(ww, r)
+		}
+		return http.HandlerFunc(fn)
+	}
 }

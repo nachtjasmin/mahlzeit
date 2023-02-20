@@ -15,6 +15,7 @@ import (
 	"codeberg.org/mahlzeit/mahlzeit/internal/app"
 	"github.com/BurntSushi/toml"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.uber.org/zap"
 )
 
 const ExitCodeOnError = 1
@@ -39,8 +40,15 @@ func main() {
 // execution into run. That itself makes it testable and the provided [context.Context] can be
 // used for downstream goroutines to cancel their operations.
 func run(ctx context.Context, args []string) error {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		return fmt.Errorf("logger setup failed: %w", err)
+	}
+	defer logger.Sync()
+	zap.RedirectStdLog(logger)
+
 	var cfg app.Configuration
-	_, err := toml.DecodeFile("config.toml", &cfg)
+	_, err = toml.DecodeFile("config.toml", &cfg)
 	if err != nil {
 		return fmt.Errorf("parsing config.toml failed: %w", err)
 	}
@@ -53,9 +61,10 @@ func run(ctx context.Context, args []string) error {
 	app := &app.Application{
 		Templates: app.NewTemplates(cfg.Web.TemplateDir),
 		Queries:   queries.New(pool),
+		Logger:    logger,
 	}
 
-	log.Printf("Starting server on: %s\n", cfg.Web.Endpoint)
+	logger.Info("starting server", zap.String("endpoint", cfg.Web.Endpoint))
 	h := &http.Server{
 		BaseContext: func(net.Listener) context.Context {
 			return ctx
