@@ -9,6 +9,7 @@ require (
 	github.com/jackc/pgconn v1.14.0
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v4 v4.18.0
+	github.com/robfig/bind v0.0.0-20140816170350-2e935d371779
 	go.uber.org/zap v1.24.0
 )
 

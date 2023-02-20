@@ -1,0 +1,22 @@
+{{ define "main" }}
+    <header>
+        <h1>Rezept bearbeiten</h1>
+        <form method="post">
+            <div>
+                <label for="recipe_name">Name:</label>
+                <input id="recipe_name" name="Name" type="text" required value="{{.Name}}">
+            </div>
+            <div>
+                <label for="servings">Portionen:</label>
+                <input id="servings" name="Servings" type="number" required value="{{.Servings}}" min="1">
+            </div>
+            <div>
+                <label for="description">Zusammenfassung</label>
+                <textarea rows="5" id="description" name="Description">
+                    {{- .Description -}}
+                </textarea>
+            </div>
+            <button type="submit">Änderungen speichern</button>
+        </form>
+    </header>
+{{ end }}

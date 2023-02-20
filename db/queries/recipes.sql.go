@@ -157,3 +157,29 @@ func (q *Queries) GetTotalIngredientsForRecipe(ctx context.Context, id int64) ([
 	}
 	return items, nil
 }
+
+const updateBasicRecipeInformation = `-- name: UpdateBasicRecipeInformation :exec
+update recipes
+set name        = $1,
+	servings    = $2,
+	description = $3,
+	updated_at  = now()
+where id = $4
+`
+
+type UpdateBasicRecipeInformationParams struct {
+	Name        string
+	Servings    int32
+	Description string
+	ID          int64
+}
+
+func (q *Queries) UpdateBasicRecipeInformation(ctx context.Context, arg UpdateBasicRecipeInformationParams) error {
+	_, err := q.db.Exec(ctx, updateBasicRecipeInformation,
+		arg.Name,
+		arg.Servings,
+		arg.Description,
+		arg.ID,
+	)
+	return err
+}
