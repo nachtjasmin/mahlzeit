@@ -33,7 +33,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 			idStr := chi.URLParam(r, "id")
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
-				app.HandleClientError(w, http.StatusBadRequest, err)
+				app.HandleClientError(w, err, http.StatusBadRequest)
 				return
 			}
 
@@ -58,7 +58,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 			idStr := chi.URLParam(r, "id")
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
-				app.HandleClientError(w, http.StatusBadRequest, err)
+				app.HandleClientError(w, err, http.StatusBadRequest)
 				return
 			}
 
@@ -77,12 +77,12 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 			idStr := chi.URLParam(r, "id")
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
-				app.HandleClientError(w, http.StatusBadRequest, err)
+				app.HandleClientError(w, err, http.StatusBadRequest)
 				return
 			}
 
 			if err := r.ParseForm(); err != nil {
-				app.HandleClientError(w, http.StatusBadRequest, err)
+				app.HandleClientError(w, err, http.StatusBadRequest)
 				return
 			}
 
@@ -92,7 +92,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				Description string
 			}{}
 			if err := bind.Request(r).All(&data); err != nil {
-				app.HandleClientError(w, http.StatusBadRequest, err)
+				app.HandleClientError(w, err, http.StatusBadRequest)
 				return
 			}
 
@@ -114,7 +114,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 			idStr := chi.URLParam(r, "id")
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
-				app.HandleClientError(w, http.StatusBadRequest, err)
+				app.HandleClientError(w, err, http.StatusBadRequest)
 				return
 			}
 
@@ -146,12 +146,12 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				idStr := chi.URLParam(r, "stepID")
 				id, err := strconv.Atoi(idStr)
 				if err != nil {
-					app.HandleClientError(w, http.StatusBadRequest, err)
+					app.HandleClientError(w, err, http.StatusBadRequest)
 					return
 				}
 
 				if err := r.ParseForm(); err != nil {
-					app.HandleClientError(w, http.StatusBadRequest, err)
+					app.HandleClientError(w, err, http.StatusBadRequest)
 					return
 				}
 
@@ -160,11 +160,11 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 					Time        string
 				}{}
 				if err := bind.Request(r).Field(&data.Instruction, "instruction"); err != nil {
-					app.HandleClientError(w, http.StatusBadRequest, err)
+					app.HandleClientError(w, err, http.StatusBadRequest)
 					return
 				}
 				if err := bind.Request(r).Field(&data.Time, "time"); err != nil {
-					app.HandleClientError(w, http.StatusBadRequest, err)
+					app.HandleClientError(w, err, http.StatusBadRequest)
 					return
 				}
 
@@ -199,7 +199,7 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				idStr := chi.URLParam(r, "stepID")
 				id, err := strconv.Atoi(idStr)
 				if err != nil {
-					app.HandleClientError(w, http.StatusBadRequest, err)
+					app.HandleClientError(w, err, http.StatusBadRequest)
 					return
 				}
 
@@ -246,14 +246,14 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				idStr := chi.URLParam(r, "stepID")
 				stepID, err := strconv.Atoi(idStr)
 				if err != nil {
-					app.HandleClientError(w, http.StatusBadRequest, err)
+					app.HandleClientError(w, err, http.StatusBadRequest)
 					return
 				}
 
 				recipeIDStr := chi.URLParam(r, "id")
 				recipeID, err := strconv.Atoi(recipeIDStr)
 				if err != nil {
-					app.HandleClientError(w, http.StatusBadRequest, err)
+					app.HandleClientError(w, err, http.StatusBadRequest)
 					return
 				}
 
@@ -273,14 +273,14 @@ func ChiHandler(c *app.Application) func(r chi.Router) {
 				idStr := chi.URLParam(r, "stepID")
 				stepID, err := strconv.Atoi(idStr)
 				if err != nil {
-					app.HandleClientError(w, http.StatusBadRequest, err)
+					app.HandleClientError(w, err, http.StatusBadRequest)
 					return
 				}
 
 				recipeID := parseIntWithDefault(chi.URLParam(r, "id"))
 
 				if err := r.ParseForm(); err != nil {
-					app.HandleClientError(w, http.StatusBadRequest, err)
+					app.HandleClientError(w, err, http.StatusBadRequest)
 					return
 				}
 				data := struct {
