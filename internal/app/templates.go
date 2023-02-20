@@ -7,6 +7,8 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
+
+	"github.com/Masterminds/sprig/v3"
 )
 
 type TemplateRenderingError struct {
@@ -92,7 +94,9 @@ func buildPageTemplate(templateDir, page string) (*template.Template, error) {
 		filepath.Join(templateDir, "pages", page),
 	}
 
-	ts, err := template.ParseFiles(files...)
+	ts, err := template.New(page).
+		Funcs(sprig.HtmlFuncMap()).
+		ParseFiles(files...)
 	if err != nil {
 		return nil, fmt.Errorf("parsing templates failed: %w", err)
 	}
