@@ -32,13 +32,15 @@ func InjectLogger(logger *zap.Logger) HTTPMiddleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Attach several pre-known request fields to the logger.
-			logger = logger.With(
+			// Do NOT use `logger = logger.With` as this will overwrite the old reference,
+			// causing the fields of the previous request added to the new one.
+			requestLog := logger.With(
 				zap.String("proto", r.Proto),
 				zap.String("path", r.URL.Path),
 				zap.String("request_id", middleware.GetReqID(r.Context())),
 			)
 
-			ctx := context.WithValue(r.Context(), contextKey, logger)
+			ctx := context.WithValue(r.Context(), contextKey, requestLog)
 			r = r.WithContext(ctx)
 
 			next.ServeHTTP(w, r)
