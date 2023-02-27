@@ -5,7 +5,7 @@
             <time>{{ .CreatedAt }}</time>
         </p>
         <div>
-            <label for="servings_number">Portionen:</label>
+            <label for="servings_number">{{ default "Portionen" .ServingsDescription }}:</label>
             <form method="get">
                 <input id="servings_number" name="servings" type="number" value="{{ .Servings}}" min="1"
                        data-hx-get

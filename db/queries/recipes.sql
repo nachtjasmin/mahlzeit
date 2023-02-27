@@ -57,10 +57,11 @@ order by ingredients.name, total_amount desc;
 
 -- name: UpdateBasicRecipeInformation :exec
 update recipes
-set name        = sqlc.arg('name'),
-	servings    = sqlc.arg('servings'),
-	description = sqlc.arg('description'),
-	updated_at  = now()
+set name                 = sqlc.arg('name'),
+	servings             = sqlc.arg('servings'),
+	description          = sqlc.arg('description'),
+	servings_description = sqlc.arg('servings_description'),
+	updated_at           = now()
 where id = sqlc.arg('id');
 
 -- name: DeleteStepByID :exec

@@ -104,10 +104,11 @@ func (app *Application) GetSingleRecipe(ctx context.Context, id int) (*Recipe, e
 // All other properties are unaffected.
 func (app *Application) UpdateRecipe(ctx context.Context, r *Recipe) error {
 	err := app.Queries.UpdateBasicRecipeInformation(ctx, queries.UpdateBasicRecipeInformationParams{
-		ID:          int64(r.ID),
-		Name:        r.Name,
-		Servings:    int32(r.Servings),
-		Description: r.Description,
+		ID:                  int64(r.ID),
+		Name:                r.Name,
+		Servings:            int32(r.Servings),
+		Description:         r.Description,
+		ServingsDescription: r.ServingsDescription,
 	})
 	if err != nil {
 		return fmt.Errorf("updating recipe %d in database: %w", r.ID, err)

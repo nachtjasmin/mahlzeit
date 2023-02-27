@@ -67,9 +67,10 @@ func (a appWrapper) postEditSingleRecipe(w http.ResponseWriter, r *http.Request)
 	}
 
 	data := struct {
-		Name        string
-		Servings    int
-		Description string
+		Name                string
+		Servings            int
+		ServingsDescription string
+		Description         string
 	}{}
 	if err := bind.Request(r).All(&data); err != nil {
 		app.HandleError(w, r, err)
@@ -77,11 +78,12 @@ func (a appWrapper) postEditSingleRecipe(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := a.app.UpdateRecipe(r.Context(), &app.Recipe{
-		ID:           id,
-		Name:         data.Name,
-		Description:  data.Description,
-		BaseServings: data.Servings,
-		Servings:     data.Servings,
+		ID:                  id,
+		Name:                data.Name,
+		Description:         data.Description,
+		BaseServings:        data.Servings,
+		Servings:            data.Servings,
+		ServingsDescription: data.ServingsDescription,
 	}); err != nil {
 		app.HandleError(w, r, err)
 		return

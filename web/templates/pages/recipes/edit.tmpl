@@ -11,6 +11,11 @@
                 <input id="servings" name="Servings" type="number" required value="{{.Servings}}" min="1">
             </div>
             <div>
+                <label for="servings_description">Portionen:</label>
+                <input id="servings_description" name="ServingsDescription" type="text"
+                       value="{{.ServingsDescription}}">
+            </div>
+            <div>
                 <label for="description">Zusammenfassung</label>
                 <textarea rows="5" id="description" name="Description">
                     {{- .Description -}}
