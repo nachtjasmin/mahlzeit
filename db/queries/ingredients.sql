@@ -21,3 +21,9 @@ delete
 from step_ingredients
 where step_id = sqlc.arg('step_id')
   and ingredients_id = sqlc.arg('ingredients_id');
+
+-- name: AddIngredient :one
+insert into ingredients (name)
+values (sqlc.arg('name'))
+on conflict (name) do update set name=excluded.name -- no-op that effectively does nothing, but returns the ID as intended
+returning id;

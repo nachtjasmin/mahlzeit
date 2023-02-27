@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/Masterminds/sprig/v3 v3.2.3
+	github.com/alecthomas/assert/v2 v2.2.1
 	github.com/carlmjohnson/resperr v0.22.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/jackc/pgconn v1.14.0
@@ -17,7 +18,10 @@ require (
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.0 // indirect
+	github.com/alecthomas/repr v0.2.0 // indirect
+	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/google/uuid v1.1.1 // indirect
+	github.com/hexops/gotextdiff v1.0.3 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect

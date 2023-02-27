@@ -11,6 +11,20 @@ import (
 	"github.com/jackc/pgtype"
 )
 
+const addIngredient = `-- name: AddIngredient :one
+insert into ingredients (name)
+values ($1)
+on conflict (name) do update set name=excluded.name -- no-op that effectively does nothing, but returns the ID as intended
+returning id
+`
+
+func (q *Queries) AddIngredient(ctx context.Context, name string) (int64, error) {
+	row := q.db.QueryRow(ctx, addIngredient, name)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const addIngredientToStep = `-- name: AddIngredientToStep :exec
 insert into step_ingredients (step_id, ingredients_id, unit_id, amount, note)
 values ($1,
