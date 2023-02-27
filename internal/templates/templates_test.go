@@ -38,15 +38,15 @@ func TestTemplates_Render(t *testing.T) {
 		}
 	})
 
-	if err := os.WriteFile(filepath.Join(root, "base.tmpl"), []byte(testBaseTemplate), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "base.tmpl"), []byte(testBaseTemplate), 0o600); err != nil {
 		t.Fatalf("writing test base template failed: %v", err)
 	}
 	pagesPath := filepath.Join(root, "pages")
-	if err := os.Mkdir(pagesPath, 0775); err != nil {
+	if err := os.Mkdir(pagesPath, 0o775); err != nil {
 		t.Fatalf("creating temporary pages directory failed: %v", err)
 	}
 	const testPageName = "test.tmpl"
-	if err := os.WriteFile(filepath.Join(pagesPath, testPageName), []byte(testPageTemplate), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(pagesPath, testPageName), []byte(testPageTemplate), 0o600); err != nil {
 		t.Fatalf("writing test page failed: %v", err)
 	}
 
@@ -86,5 +86,4 @@ func TestTemplates_Render(t *testing.T) {
 			t.Fatalf("content differs, want: %s, got: %s", expectedContent, b.String())
 		}
 	})
-
 }

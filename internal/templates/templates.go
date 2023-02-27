@@ -19,6 +19,7 @@ type TemplateRenderingError struct {
 func (e TemplateRenderingError) Error() string {
 	return fmt.Sprintf("rendering template %s failed: %s", e.TemplateName, e.err.Error())
 }
+
 func (e TemplateRenderingError) Unwrap() error {
 	return e.err
 }
