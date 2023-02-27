@@ -1,5 +1,5 @@
 // Package zaphelpers provides several helpers for the usage with zap.
-package zaphelpers
+package zaphelper
 
 import (
 	"context"

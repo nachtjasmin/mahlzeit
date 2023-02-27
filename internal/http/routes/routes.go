@@ -6,7 +6,7 @@ import (
 
 	"codeberg.org/mahlzeit/mahlzeit/internal/app"
 	"codeberg.org/mahlzeit/mahlzeit/internal/http/httpreq"
-	"codeberg.org/mahlzeit/mahlzeit/internal/zaphelpers"
+	"codeberg.org/mahlzeit/mahlzeit/internal/zaphelper"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -21,8 +21,8 @@ func All(c *app.Application) *chi.Mux {
 	r.Use(
 		middleware.RequestID,
 		middleware.RealIP,
-		zaphelpers.InjectLogger(c.Logger),
-		zaphelpers.RequestLogger(),
+		zaphelper.InjectLogger(c.Logger),
+		zaphelper.RequestLogger(),
 		middleware.Recoverer,
 		middleware.CleanPath,
 	)
