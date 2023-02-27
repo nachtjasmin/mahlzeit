@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"codeberg.org/mahlzeit/mahlzeit/db/queries"
 	"github.com/jackc/pgtype"
 )
 
@@ -93,6 +94,26 @@ func (app *Application) GetSingleRecipe(ctx context.Context, id int) (*Recipe, e
 	}
 
 	return res, nil
+}
+
+// UpdateRecipe updates basic information about a recipe. This includes:
+//   - Name
+//   - Servings
+//   - Description
+//
+// All other properties are unaffected.
+func (app *Application) UpdateRecipe(ctx context.Context, r *Recipe) error {
+	err := app.Queries.UpdateBasicRecipeInformation(ctx, queries.UpdateBasicRecipeInformationParams{
+		ID:          int64(r.ID),
+		Name:        r.Name,
+		Servings:    int32(r.Servings),
+		Description: r.Description,
+	})
+	if err != nil {
+		return fmt.Errorf("updating recipe %d in database: %w", r.ID, err)
+	}
+
+	return nil
 }
 
 type ListEntry struct {

@@ -1,17 +1,14 @@
 package routes
 
 import (
-	"database/sql"
 	"net/http"
 	"strconv"
 	"time"
 
-	"codeberg.org/mahlzeit/mahlzeit/db/queries"
 	"codeberg.org/mahlzeit/mahlzeit/internal/app"
 	"codeberg.org/mahlzeit/mahlzeit/internal/http/htmx"
 	"codeberg.org/mahlzeit/mahlzeit/internal/http/httpreq"
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgtype"
 	"github.com/robfig/bind"
 )
 
@@ -26,6 +23,7 @@ func (a appWrapper) getAllRecipes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
 func (a appWrapper) getSingleRecipe(w http.ResponseWriter, r *http.Request) {
 	id := httpreq.MustIDParam(r, "id")
 	res, err := a.app.GetSingleRecipe(r.Context(), id)
@@ -60,6 +58,7 @@ func (a appWrapper) getEditSingleRecipe(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 }
+
 func (a appWrapper) postEditSingleRecipe(w http.ResponseWriter, r *http.Request) {
 	id := httpreq.MustIDParam(r, "id")
 	if err := r.ParseForm(); err != nil {
@@ -77,13 +76,12 @@ func (a appWrapper) postEditSingleRecipe(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// TODO: Add input validation
-	// TODO: Refactor into service
-	if err := a.app.Queries.UpdateBasicRecipeInformation(r.Context(), queries.UpdateBasicRecipeInformationParams{
-		ID:          int64(id),
-		Name:        data.Name,
-		Servings:    int32(data.Servings),
-		Description: data.Description,
+	if err := a.app.UpdateRecipe(r.Context(), &app.Recipe{
+		ID:           id,
+		Name:         data.Name,
+		Description:  data.Description,
+		BaseServings: data.Servings,
+		Servings:     data.Servings,
 	}); err != nil {
 		app.HandleServerError(w, r, err)
 		return
@@ -91,24 +89,17 @@ func (a appWrapper) postEditSingleRecipe(w http.ResponseWriter, r *http.Request)
 
 	http.Redirect(w, r, "/recipes/"+strconv.Itoa(id), http.StatusFound)
 }
+
 func (a appWrapper) postAddStepToRecipe(w http.ResponseWriter, r *http.Request) {
 	id := httpreq.MustIDParam(r, "id")
-	emptyStep, err := a.app.Queries.AddNewEmptyStep(r.Context(), int64(id))
+	step, err := a.app.AddStepToRecipe(r.Context(), id)
 	if err != nil {
 		app.HandleServerError(w, r, err)
 		return
 	}
 
-	s := app.Step{
-		ID:          int(emptyStep.ID),
-		RecipeID:    int(emptyStep.RecipeID),
-		Instruction: emptyStep.Instruction,
-		Ingredients: nil,
-	}
-	_ = emptyStep.Time.AssignTo(&s.Time)
-
 	if htmx.IsHTMXRequest(r) {
-		if err := a.app.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step", s); err != nil {
+		if err := a.app.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step", step); err != nil {
 			app.HandleServerError(w, r, err)
 			return
 		}
@@ -116,6 +107,7 @@ func (a appWrapper) postAddStepToRecipe(w http.ResponseWriter, r *http.Request) 
 		http.Redirect(w, r, "", http.StatusFound)
 	}
 }
+
 func (a appWrapper) postNewRecipeStep(w http.ResponseWriter, r *http.Request) {
 	id := httpreq.MustIDParam(r, "id")
 	if err := r.ParseForm(); err != nil {
@@ -136,13 +128,11 @@ func (a appWrapper) postNewRecipeStep(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var pgTime pgtype.Interval
 	dur, _ := time.ParseDuration(data.Time)
-	_ = pgTime.Set(dur)
-	if err := a.app.Queries.UpdateStepByID(r.Context(), queries.UpdateStepByIDParams{
-		ID:          int64(id),
+	if err := a.app.UpdateStep(r.Context(), app.Step{
+		ID:          id,
 		Instruction: data.Instruction,
-		Time:        pgTime,
+		Time:        dur,
 	}); err != nil {
 		app.HandleServerError(w, r, err)
 		return
@@ -163,15 +153,17 @@ func (a appWrapper) postNewRecipeStep(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/recipes/"+chi.URLParam(r, "id"), http.StatusFound)
 	}
 }
+
 func (a appWrapper) deleteRecipeStep(w http.ResponseWriter, r *http.Request) {
 	id := httpreq.MustIDParam(r, "id")
-	if err := a.app.Queries.DeleteStepByID(r.Context(), int64(id)); err != nil {
+	if err := a.app.DeleteRecipeStepByID(r.Context(), id); err != nil {
 		app.HandleServerError(w, r, err)
 		return
 	}
 
 	w.WriteHeader(200)
 }
+
 func (a appWrapper) postAddNewRecipeStepIngredient(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Ingredients []app.Ingredient
@@ -180,30 +172,20 @@ func (a appWrapper) postAddNewRecipeStepIngredient(w http.ResponseWriter, r *htt
 		StepID      int
 	}{}
 
-	ingredients, err := a.app.Queries.GetAllIngredients(r.Context())
+	ingredients, err := a.app.GetAllIngredients(r.Context())
 	if err != nil {
 		app.HandleServerError(w, r, err)
 		return
 	}
 
-	units, err := a.app.Queries.GetAllUnits(r.Context())
+	units, err := a.app.GetAllUnits(r.Context())
 	if err != nil {
 		app.HandleServerError(w, r, err)
 		return
 	}
 
-	for _, i := range ingredients {
-		data.Ingredients = append(data.Ingredients, app.Ingredient{
-			ID:   int(i.ID),
-			Name: i.Name,
-		})
-	}
-	for _, u := range units {
-		data.Units = append(data.Units, app.Unit{
-			ID:   int(u.ID),
-			Name: u.Name,
-		})
-	}
+	data.Ingredients = ingredients
+	data.Units = units
 
 	stepID, err := httpreq.IDParam(r, "stepID")
 	if err != nil {
@@ -228,54 +210,37 @@ func (a appWrapper) postAddNewRecipeStepIngredient(w http.ResponseWriter, r *htt
 		panic("progressive enhancement not yet implemented")
 	}
 }
+
 func (a appWrapper) postAddRecipeStepIngredient(w http.ResponseWriter, r *http.Request) {
+	recipeID := httpreq.MustIDParam(r, "id")
 	stepID, err := httpreq.IDParam(r, "stepID")
 	if err != nil {
 		app.HandleClientError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
-	recipeID := httpreq.MustIDParam(r, "id")
-
 	if err := r.ParseForm(); err != nil {
 		app.HandleClientError(w, r, err, http.StatusBadRequest)
 		return
 	}
-	data := struct {
-		Ingredient int
-		Amount     int
-		Unit       int
-		Note       string
-	}{
-		Ingredient: parseIntWithDefault(r.PostFormValue("Ingredient")),
-		Amount:     parseIntWithDefault(r.PostFormValue("Amount")),
-		Unit:       parseIntWithDefault(r.PostFormValue("Unit")),
-		Note:       r.PostFormValue("Note"),
-	}
-	var (
-		amount pgtype.Numeric
-		unit   sql.NullInt64
-	)
-	if data.Unit > 0 {
-		unit = sql.NullInt64{
-			Int64: int64(data.Unit),
-			Valid: true,
-		}
-	}
-	_ = amount.Set(data.Amount)
 
-	if err := a.app.Queries.AddIngredientToStep(r.Context(), queries.AddIngredientToStepParams{
-		StepID:        int64(stepID),
-		IngredientsID: int64(data.Ingredient),
-		UnitID:        unit,
-		Amount:        amount,
-		Note:          data.Note,
-	}); err != nil {
+	params := app.AddIngredientToStepParams{
+		StepID:       stepID,
+		IngredientID: parseIntWithDefault(r.PostFormValue("Ingredient")),
+		Amount:       float64(parseIntWithDefault(r.PostFormValue("Amount"))),
+		Note:         r.PostFormValue("Note"),
+	}
+
+	if unit := parseIntWithDefault(r.PostFormValue("Unit")); unit > 0 {
+		params.UnitID = &unit
+	}
+
+	if err := a.app.AddIngredientToStep(r.Context(), params); err != nil {
 		app.HandleServerError(w, r, err)
 		return
 	}
 
-	ingredientName, err := a.app.Queries.GetIngredientNameByID(r.Context(), int64(data.Ingredient))
+	ingredient, err := a.app.GetIngredient(r.Context(), params.IngredientID)
 	if err != nil {
 		app.HandleServerError(w, r, err)
 		return
@@ -283,9 +248,9 @@ func (a appWrapper) postAddRecipeStepIngredient(w http.ResponseWriter, r *http.R
 
 	if htmx.IsHTMXRequest(r) {
 		if err := a.app.Templates.RenderTemplate(w, "recipes/edit.tmpl", "ingredient", app.Ingredient{
-			Name:     ingredientName,
-			Amount:   float64(data.Amount),
-			Note:     data.Note,
+			Name:     ingredient.Name,
+			Amount:   params.Amount,
+			Note:     params.Note,
 			StepID:   stepID,
 			RecipeID: recipeID,
 		}); err != nil {
@@ -296,6 +261,7 @@ func (a appWrapper) postAddRecipeStepIngredient(w http.ResponseWriter, r *http.R
 		panic("progressive enhancement not yet implemented")
 	}
 }
+
 func (a appWrapper) deleteRecipeStepIngredient(w http.ResponseWriter, r *http.Request) {
 	stepID, err := httpreq.IDParam(r, "stepID")
 	if err != nil {
@@ -309,9 +275,9 @@ func (a appWrapper) deleteRecipeStepIngredient(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if err := a.app.Queries.DeleteIngredientFromStep(r.Context(), queries.DeleteIngredientFromStepParams{
-		StepID:        int64(stepID),
-		IngredientsID: int64(ingredientID),
+	if err := a.app.DeleteIngredientFromStep(r.Context(), app.DeleteIngredientFromStepParams{
+		StepID:       stepID,
+		IngredientID: ingredientID,
 	}); err != nil {
 		app.HandleServerError(w, r, err)
 		return

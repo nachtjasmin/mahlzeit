@@ -12,7 +12,7 @@ where id = sqlc.arg('id');
 insert into step_ingredients (step_id, ingredients_id, unit_id, amount, note)
 values (sqlc.arg('step_id'),
 		sqlc.arg('ingredients_id'),
-		nullif(sqlc.arg('unit_id'), 0),
+		nullif(sqlc.arg('unit_id')::bigint, 0),
 		sqlc.arg('amount'),
 		sqlc.arg('note'));
 

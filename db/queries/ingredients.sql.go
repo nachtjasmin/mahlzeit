@@ -15,7 +15,7 @@ const addIngredientToStep = `-- name: AddIngredientToStep :exec
 insert into step_ingredients (step_id, ingredients_id, unit_id, amount, note)
 values ($1,
 		$2,
-		nullif($3, 0),
+		nullif($3::bigint, 0),
 		$4,
 		$5)
 `
@@ -23,7 +23,7 @@ values ($1,
 type AddIngredientToStepParams struct {
 	StepID        int64
 	IngredientsID int64
-	UnitID        interface{}
+	UnitID        int64
 	Amount        pgtype.Numeric
 	Note          string
 }
