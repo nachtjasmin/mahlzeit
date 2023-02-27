@@ -1,20 +1,15 @@
-package recipe
+package app
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"codeberg.org/mahlzeit/mahlzeit/internal/app"
 	"github.com/jackc/pgtype"
 )
 
-type Handler struct {
-	app *app.Application
-}
-
-func (h *Handler) GetAllRecipes(ctx context.Context) ([]ListEntry, error) {
-	dbResult, err := h.app.Queries.GetAllRecipesByName(ctx)
+func (app *Application) GetAllRecipes(ctx context.Context) ([]ListEntry, error) {
+	dbResult, err := app.Queries.GetAllRecipesByName(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("fetching recipes from database: %w", err)
 	}
@@ -31,9 +26,9 @@ func (h *Handler) GetAllRecipes(ctx context.Context) ([]ListEntry, error) {
 }
 
 // GetSingleRecipe returns a recipe by its ID.
-func (h *Handler) GetSingleRecipe(ctx context.Context, id int) (*Recipe, error) {
+func (app *Application) GetSingleRecipe(ctx context.Context, id int) (*Recipe, error) {
 	// TODO: execute the following queries in a transaction
-	base, err := h.app.Queries.GetRecipeByID(ctx, int64(id))
+	base, err := app.Queries.GetRecipeByID(ctx, int64(id))
 	if err != nil {
 		return nil, fmt.Errorf("querying recipe %d: %w", id, err)
 	}
@@ -52,7 +47,7 @@ func (h *Handler) GetSingleRecipe(ctx context.Context, id int) (*Recipe, error) 
 	_ = base.WorkingTime.AssignTo(&res.WorkingTime)
 	_ = base.WaitingTime.AssignTo(&res.WaitingTime)
 
-	ingredients, err := h.app.Queries.GetTotalIngredientsForRecipe(ctx, int64(id))
+	ingredients, err := app.Queries.GetTotalIngredientsForRecipe(ctx, int64(id))
 	if err != nil {
 		return nil, fmt.Errorf("querying ingredients for recipe %d: %w", id, err)
 	}
@@ -65,7 +60,7 @@ func (h *Handler) GetSingleRecipe(ctx context.Context, id int) (*Recipe, error) 
 		})
 	}
 
-	steps, err := h.app.Queries.GetStepsForRecipeByID(ctx, int64(id))
+	steps, err := app.Queries.GetStepsForRecipeByID(ctx, int64(id))
 	if err != nil {
 		return nil, fmt.Errorf("querying steps for recipe %d: %w", id, err)
 	}

@@ -13,6 +13,7 @@ import (
 
 	"codeberg.org/mahlzeit/mahlzeit/db/queries"
 	"codeberg.org/mahlzeit/mahlzeit/internal/app"
+	"codeberg.org/mahlzeit/mahlzeit/internal/http/routes"
 	"codeberg.org/mahlzeit/mahlzeit/internal/templates"
 	"github.com/BurntSushi/toml"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -71,7 +72,7 @@ func run(ctx context.Context, args []string) error {
 			return ctx
 		},
 		Addr:              cfg.Web.Endpoint,
-		Handler:           routes(app),
+		Handler:           routes.All(app),
 		ReadHeaderTimeout: time.Second, // protect against SLOWLORIS attack
 	}
 	return h.ListenAndServe()
