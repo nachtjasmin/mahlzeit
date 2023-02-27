@@ -9,6 +9,20 @@ import (
 	"context"
 )
 
+const addUnit = `-- name: AddUnit :one
+insert into units (name)
+values ($1)
+on conflict (name) do update set name=excluded.name -- no-op that effectively does nothing, but returns the ID as intended
+returning id
+`
+
+func (q *Queries) AddUnit(ctx context.Context, name string) (int64, error) {
+	row := q.db.QueryRow(ctx, addUnit, name)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getAllUnits = `-- name: GetAllUnits :many
 select id, name
 from units
