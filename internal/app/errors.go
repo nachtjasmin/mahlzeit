@@ -4,22 +4,21 @@ import (
 	"net/http"
 
 	"codeberg.org/mahlzeit/mahlzeit/internal/zaphelper"
+	"github.com/carlmjohnson/resperr"
 	"go.uber.org/zap"
 )
 
-// HandleClientError handles all errors that occurred due to the users fault.
-// This can be anything from a [http.StatusBadRequest] up to a [http.StatusUnprocessableEntity].
-// Errors are logged for debugging.
-func HandleClientError(w http.ResponseWriter, r *http.Request, err error, httpStatusCode int) {
-	w.WriteHeader(httpStatusCode)
-	zaphelper.FromRequest(r).
-		Info("client-side error", zap.Error(err))
-}
+// HandleError handles all errors. They are logged. If a user message
+// is provided with [resperr.UserMessenger], that message is written to w.
+func HandleError(w http.ResponseWriter, r *http.Request, err error) {
+	code := resperr.StatusCode(err)
 
-// HandleServerError handles server-side errors with a [http.StatusInternalServerError].
-// Errors are logged for debugging.
-func HandleServerError(w http.ResponseWriter, r *http.Request, err error) {
-	w.WriteHeader(http.StatusInternalServerError)
-	zaphelper.FromRequest(r).
-		Info("server-side error", zap.Error(err))
+	w.WriteHeader(code)
+	if code == http.StatusInternalServerError {
+		zaphelper.FromRequest(r).Error("unexpected error", zap.Error(err))
+		return
+	}
+
+	zaphelper.FromRequest(r).Info("error during request", zap.Error(err))
+	_, _ = w.Write([]byte(resperr.UserMessage(err)))
 }

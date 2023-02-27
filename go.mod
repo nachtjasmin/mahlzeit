@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/Masterminds/sprig/v3 v3.2.3
+	github.com/carlmjohnson/resperr v0.22.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/jackc/pgconn v1.14.0
 	github.com/jackc/pgtype v1.14.0

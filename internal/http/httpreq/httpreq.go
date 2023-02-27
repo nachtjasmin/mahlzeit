@@ -1,10 +1,10 @@
 package httpreq
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/carlmjohnson/resperr"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -13,11 +13,11 @@ import (
 func IDParam(r *http.Request, name string) (int, error) {
 	res, err := strconv.Atoi(chi.URLParam(r, name))
 	if err != nil {
-		return 0, fmt.Errorf("decoding parameter %q into integer failed", name)
+		return 0, resperr.WithUserMessagef(err, "invalid ID in parameter %q provided", name)
 	}
 
 	if res <= 0 {
-		return 0, fmt.Errorf("parameter %q is not a valid ID", name)
+		return 0, resperr.WithUserMessagef(err, "invalid ID in parameter %q provided", name)
 	}
 
 	return res, nil

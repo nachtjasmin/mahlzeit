@@ -15,11 +15,11 @@ import (
 func (a appWrapper) getAllRecipes(w http.ResponseWriter, r *http.Request) {
 	recipes, err := a.app.GetAllRecipes(r.Context())
 	if err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 	if err := a.app.Templates.RenderPage(w, "recipes/index.tmpl", recipes); err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 }
@@ -28,7 +28,7 @@ func (a appWrapper) getSingleRecipe(w http.ResponseWriter, r *http.Request) {
 	id := httpreq.MustIDParam(r, "id")
 	res, err := a.app.GetSingleRecipe(r.Context(), id)
 	if err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -39,7 +39,7 @@ func (a appWrapper) getSingleRecipe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := a.app.Templates.RenderPage(w, "recipes/single.tmpl", res); err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 }
@@ -49,12 +49,12 @@ func (a appWrapper) getEditSingleRecipe(w http.ResponseWriter, r *http.Request) 
 
 	res, err := a.app.GetSingleRecipe(r.Context(), id)
 	if err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 
 	if err := a.app.Templates.RenderPage(w, "recipes/edit.tmpl", res); err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 }
@@ -62,7 +62,7 @@ func (a appWrapper) getEditSingleRecipe(w http.ResponseWriter, r *http.Request) 
 func (a appWrapper) postEditSingleRecipe(w http.ResponseWriter, r *http.Request) {
 	id := httpreq.MustIDParam(r, "id")
 	if err := r.ParseForm(); err != nil {
-		app.HandleClientError(w, r, err, http.StatusBadRequest)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (a appWrapper) postEditSingleRecipe(w http.ResponseWriter, r *http.Request)
 		Description string
 	}{}
 	if err := bind.Request(r).All(&data); err != nil {
-		app.HandleClientError(w, r, err, http.StatusBadRequest)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (a appWrapper) postEditSingleRecipe(w http.ResponseWriter, r *http.Request)
 		BaseServings: data.Servings,
 		Servings:     data.Servings,
 	}); err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -94,13 +94,13 @@ func (a appWrapper) postAddStepToRecipe(w http.ResponseWriter, r *http.Request) 
 	id := httpreq.MustIDParam(r, "id")
 	step, err := a.app.AddStepToRecipe(r.Context(), id)
 	if err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 
 	if htmx.IsHTMXRequest(r) {
 		if err := a.app.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step", step); err != nil {
-			app.HandleServerError(w, r, err)
+			app.HandleError(w, r, err)
 			return
 		}
 	} else {
@@ -111,7 +111,7 @@ func (a appWrapper) postAddStepToRecipe(w http.ResponseWriter, r *http.Request) 
 func (a appWrapper) postNewRecipeStep(w http.ResponseWriter, r *http.Request) {
 	id := httpreq.MustIDParam(r, "id")
 	if err := r.ParseForm(); err != nil {
-		app.HandleClientError(w, r, err, http.StatusBadRequest)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -120,11 +120,11 @@ func (a appWrapper) postNewRecipeStep(w http.ResponseWriter, r *http.Request) {
 		Time        string
 	}{}
 	if err := bind.Request(r).Field(&data.Instruction, "instruction"); err != nil {
-		app.HandleClientError(w, r, err, http.StatusBadRequest)
+		app.HandleError(w, r, err)
 		return
 	}
 	if err := bind.Request(r).Field(&data.Time, "time"); err != nil {
-		app.HandleClientError(w, r, err, http.StatusBadRequest)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -134,7 +134,7 @@ func (a appWrapper) postNewRecipeStep(w http.ResponseWriter, r *http.Request) {
 		Instruction: data.Instruction,
 		Time:        dur,
 	}); err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -146,7 +146,7 @@ func (a appWrapper) postNewRecipeStep(w http.ResponseWriter, r *http.Request) {
 			Time:        dur,
 			Ingredients: nil,
 		}); err != nil {
-			app.HandleServerError(w, r, err)
+			app.HandleError(w, r, err)
 			return
 		}
 	} else {
@@ -157,7 +157,7 @@ func (a appWrapper) postNewRecipeStep(w http.ResponseWriter, r *http.Request) {
 func (a appWrapper) deleteRecipeStep(w http.ResponseWriter, r *http.Request) {
 	id := httpreq.MustIDParam(r, "id")
 	if err := a.app.DeleteRecipeStepByID(r.Context(), id); err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -174,13 +174,13 @@ func (a appWrapper) postAddNewRecipeStepIngredient(w http.ResponseWriter, r *htt
 
 	ingredients, err := a.app.GetAllIngredients(r.Context())
 	if err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 
 	units, err := a.app.GetAllUnits(r.Context())
 	if err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -189,12 +189,12 @@ func (a appWrapper) postAddNewRecipeStepIngredient(w http.ResponseWriter, r *htt
 
 	stepID, err := httpreq.IDParam(r, "stepID")
 	if err != nil {
-		app.HandleClientError(w, r, err, http.StatusBadRequest)
+		app.HandleError(w, r, err)
 		return
 	}
 	recipeID, err := httpreq.IDParam(r, "id")
 	if err != nil {
-		app.HandleClientError(w, r, err, http.StatusBadRequest)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -203,7 +203,7 @@ func (a appWrapper) postAddNewRecipeStepIngredient(w http.ResponseWriter, r *htt
 
 	if htmx.IsHTMXRequest(r) {
 		if err := a.app.Templates.RenderTemplate(w, "recipes/edit.tmpl", "new_ingredient", data); err != nil {
-			app.HandleServerError(w, r, err)
+			app.HandleError(w, r, err)
 			return
 		}
 	} else {
@@ -215,12 +215,12 @@ func (a appWrapper) postAddRecipeStepIngredient(w http.ResponseWriter, r *http.R
 	recipeID := httpreq.MustIDParam(r, "id")
 	stepID, err := httpreq.IDParam(r, "stepID")
 	if err != nil {
-		app.HandleClientError(w, r, err, http.StatusBadRequest)
+		app.HandleError(w, r, err)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		app.HandleClientError(w, r, err, http.StatusBadRequest)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -236,13 +236,13 @@ func (a appWrapper) postAddRecipeStepIngredient(w http.ResponseWriter, r *http.R
 	}
 
 	if err := a.app.AddIngredientToStep(r.Context(), params); err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 
 	ingredient, err := a.app.GetIngredient(r.Context(), params.IngredientID)
 	if err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -254,7 +254,7 @@ func (a appWrapper) postAddRecipeStepIngredient(w http.ResponseWriter, r *http.R
 			StepID:   stepID,
 			RecipeID: recipeID,
 		}); err != nil {
-			app.HandleServerError(w, r, err)
+			app.HandleError(w, r, err)
 			return
 		}
 	} else {
@@ -265,13 +265,13 @@ func (a appWrapper) postAddRecipeStepIngredient(w http.ResponseWriter, r *http.R
 func (a appWrapper) deleteRecipeStepIngredient(w http.ResponseWriter, r *http.Request) {
 	stepID, err := httpreq.IDParam(r, "stepID")
 	if err != nil {
-		app.HandleClientError(w, r, err, http.StatusBadRequest)
+		app.HandleError(w, r, err)
 		return
 	}
 
 	ingredientID, err := httpreq.IDParam(r, "ingredientID")
 	if err != nil {
-		app.HandleClientError(w, r, err, http.StatusBadRequest)
+		app.HandleError(w, r, err)
 		return
 	}
 
@@ -279,7 +279,7 @@ func (a appWrapper) deleteRecipeStepIngredient(w http.ResponseWriter, r *http.Re
 		StepID:       stepID,
 		IngredientID: ingredientID,
 	}); err != nil {
-		app.HandleServerError(w, r, err)
+		app.HandleError(w, r, err)
 		return
 	}
 }

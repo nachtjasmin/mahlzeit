@@ -46,7 +46,7 @@ func All(c *app.Application) *chi.Mux {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					_, err := httpreq.IDParam(r, "id")
 					if err != nil {
-						app.HandleClientError(w, r, err, http.StatusBadRequest)
+						app.HandleError(w, r, err)
 						return
 					}
 
