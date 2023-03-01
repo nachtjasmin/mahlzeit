@@ -39,7 +39,7 @@ func All(c *app.Application) *chi.Mux {
 
 	w := appWrapper{c}
 	r.Route("/recipes", func(r chi.Router) {
-		r.Get("/", w.getAllRecipes)
+		r.Get("/", errorWrapper(w.getAllRecipes))
 		r.Route("/{id}", func(r chi.Router) {
 			// Add simple middleware to validate the recipe ID.
 			r.Use(func(next http.Handler) http.Handler {
@@ -54,16 +54,16 @@ func All(c *app.Application) *chi.Mux {
 				})
 			})
 
-			r.Get("/", w.getSingleRecipe)
-			r.Get("/edit", w.getEditSingleRecipe)
-			r.Post("/edit", w.postEditSingleRecipe)
-			r.Post("/edit/add_step", w.postAddStepToRecipe)
+			r.Get("/", errorWrapper(w.getSingleRecipe))
+			r.Get("/edit", errorWrapper(w.getEditSingleRecipe))
+			r.Post("/edit", errorWrapper(w.postEditSingleRecipe))
+			r.Post("/edit/add_step", errorWrapper(w.postAddStepToRecipe))
 			r.Route("/steps/{stepID}", func(r chi.Router) {
-				r.Post("/", w.postNewRecipeStep)
-				r.Delete("/", w.deleteRecipeStep)
-				r.Post("/add_ingredient", w.postAddNewRecipeStepIngredient)
-				r.Post("/ingredients", w.postAddRecipeStepIngredient)
-				r.Delete("/ingredients/{ingredientID}", w.deleteRecipeStepIngredient)
+				r.Post("/", errorWrapper(w.postNewRecipeStep))
+				r.Delete("/", errorWrapper(w.deleteRecipeStep))
+				r.Post("/add_ingredient", errorWrapper(w.postAddNewRecipeStepIngredient))
+				r.Post("/ingredients", errorWrapper(w.postAddRecipeStepIngredient))
+				r.Delete("/ingredients/{ingredientID}", errorWrapper(w.deleteRecipeStepIngredient))
 			})
 		})
 	})
@@ -76,3 +76,25 @@ func All(c *app.Application) *chi.Mux {
 //
 //	func (w *appWrapper) getAllEntities(w http.ResponseWriter, r *http.Request) {...}
 type appWrapper struct{ app *app.Application }
+
+// ErrHandlerFunc is an adapted version of the http.HandlerFunc which allows to return an error.
+// This is especially helpful to avoid the pattern of:
+//
+//	 err := someMethod()
+//	 if err != nil {
+//			app.HandleError(w, r, err)
+//			return
+//	 }
+//
+// Instead, the error can be returned, reducing the possibility of forgetting a return statement.
+type ErrHandlerFunc func(w http.ResponseWriter, r *http.Request) error
+
+// errorWrapper takes a ErrHandlerFunc and forwards all errors to [app.HandleError].
+func errorWrapper(fn ErrHandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := fn(w, r)
+		if err != nil {
+			app.HandleError(w, r, err)
+		}
+	}
+}
