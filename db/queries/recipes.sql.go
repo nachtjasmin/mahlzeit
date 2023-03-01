@@ -201,7 +201,8 @@ from steps
 		 left join ingredients on step_ingredients.ingredients_id = ingredients.id
 		 left join units on units.id = step_ingredients.unit_id
 where steps.recipe_id = $1
-group by steps.id, "time", instruction
+group by steps.id, steps.sort_order, "time", instruction
+order by steps.sort_order
 `
 
 type GetStepsForRecipeByIDRow struct {
