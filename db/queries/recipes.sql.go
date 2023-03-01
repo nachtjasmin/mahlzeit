@@ -8,6 +8,7 @@ package queries
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/jackc/pgtype"
 )
@@ -15,7 +16,7 @@ import (
 const addNewEmptyStep = `-- name: AddNewEmptyStep :one
 insert into steps (recipe_id, sort_order, instruction, time)
 select $1,
-	   max(sort_order) + 1,
+	   coalesce(max(sort_order), 0) + 1,
 	   '',
 	   '0 seconds'
 from steps
@@ -33,6 +34,54 @@ func (q *Queries) AddNewEmptyStep(ctx context.Context, recipeID int64) (Step, er
 		&i.Instruction,
 		&i.Time,
 	)
+	return i, err
+}
+
+const addRecipe = `-- name: AddRecipe :one
+insert into recipes(name, description, working_time, waiting_time, created_at, updated_at, created_by, source, servings,
+					servings_description)
+values ($1,
+		$2,
+		$3,
+		$4,
+		now(),
+		now(),
+		$5,
+		$6,
+		$7,
+		$8)
+returning id, created_at
+`
+
+type AddRecipeParams struct {
+	Name                string
+	Description         string
+	WorkingTime         pgtype.Interval
+	WaitingTime         pgtype.Interval
+	CreatedBy           int64
+	Source              sql.NullString
+	Servings            int32
+	ServingsDescription string
+}
+
+type AddRecipeRow struct {
+	ID        int64
+	CreatedAt time.Time
+}
+
+func (q *Queries) AddRecipe(ctx context.Context, arg AddRecipeParams) (AddRecipeRow, error) {
+	row := q.db.QueryRow(ctx, addRecipe,
+		arg.Name,
+		arg.Description,
+		arg.WorkingTime,
+		arg.WaitingTime,
+		arg.CreatedBy,
+		arg.Source,
+		arg.Servings,
+		arg.ServingsDescription,
+	)
+	var i AddRecipeRow
+	err := row.Scan(&i.ID, &i.CreatedAt)
 	return i, err
 }
 
@@ -109,6 +158,23 @@ func (q *Queries) GetRecipeByID(ctx context.Context, id int64) (Recipe, error) {
 		&i.Source,
 		&i.Servings,
 		&i.ServingsDescription,
+	)
+	return i, err
+}
+
+const getStepByID = `-- name: GetStepByID :one
+select id, recipe_id, sort_order, instruction, time from steps where id = $1
+`
+
+func (q *Queries) GetStepByID(ctx context.Context, id int64) (Step, error) {
+	row := q.db.QueryRow(ctx, getStepByID, id)
+	var i Step
+	err := row.Scan(
+		&i.ID,
+		&i.RecipeID,
+		&i.SortOrder,
+		&i.Instruction,
+		&i.Time,
 	)
 	return i, err
 }

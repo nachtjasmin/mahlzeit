@@ -2,9 +2,13 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 
 	"codeberg.org/mahlzeit/mahlzeit/db/queries"
+	"github.com/carlmjohnson/resperr"
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
 )
 
@@ -69,6 +73,18 @@ func (app *Application) AddIngredientToStep(ctx context.Context, params AddIngre
 		Amount:        amount,
 		Note:          params.Note,
 	}); err != nil {
+		var pgerr *pgconn.PgError
+		if !errors.As(err, &pgerr) {
+			return fmt.Errorf("adding ingredient to step %d: %w", params.StepID, err)
+		}
+
+		switch pgerr.ConstraintName {
+		case "step_ingredients_step_id_fkey":
+			return resperr.WithCodeAndMessage(err, http.StatusNotFound, "step does not exist")
+		case "step_ingredients_ingredients_id_fkey":
+			return resperr.WithCodeAndMessage(err, http.StatusBadRequest, "ingredient does not exist")
+		}
+
 		return fmt.Errorf("adding ingredient to step %d: %w", params.StepID, err)
 	}
 

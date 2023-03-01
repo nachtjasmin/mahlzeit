@@ -75,12 +75,30 @@ set instruction = sqlc.arg('instruction'),
 	time        = sqlc.arg('time')
 where id = sqlc.arg('id');
 
+-- name: GetStepByID :one
+select * from steps where id = sqlc.arg('id');
+
 -- name: AddNewEmptyStep :one
 insert into steps (recipe_id, sort_order, instruction, time)
 select sqlc.arg('recipe_id'),
-	   max(sort_order) + 1,
+	   coalesce(max(sort_order), 0) + 1,
 	   '',
 	   '0 seconds'
 from steps
 where recipe_id = sqlc.arg('recipe_id')
 returning steps.*;
+
+-- name: AddRecipe :one
+insert into recipes(name, description, working_time, waiting_time, created_at, updated_at, created_by, source, servings,
+					servings_description)
+values (sqlc.arg('name'),
+		sqlc.arg('description'),
+		sqlc.arg('working_time'),
+		sqlc.arg('waiting_time'),
+		now(),
+		now(),
+		sqlc.arg('created_by'),
+		sqlc.arg('source'),
+		sqlc.arg('servings'),
+		sqlc.arg('servings_description'))
+returning id, created_at;
