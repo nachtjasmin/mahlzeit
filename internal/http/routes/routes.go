@@ -25,6 +25,7 @@ func All(c *app.Application) *chi.Mux {
 		zaphelper.RequestLogger(),
 		middleware.Recoverer,
 		middleware.CleanPath,
+		stripMultipleQueryParameters,
 	)
 
 	// Set a timeout value on the request context (ctx), that will signal
@@ -97,4 +98,30 @@ func errorWrapper(fn ErrHandlerFunc) http.HandlerFunc {
 			app.HandleError(w, r, err)
 		}
 	}
+}
+
+// stripMultipleQueryParameters strips all query parameters that occur multiple times on a URL.
+// Only the last query parameter is kept.
+// This is implemented, because requests sent by HTMX can be erroneous with multiple params with the same name.
+// For example, given the URL "localhost/?a=1&b=2&a=3", stripMultipleQueryParameters would remove the "a=1" from the URL.
+func stripMultipleQueryParameters(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			handler.ServeHTTP(w, r)
+			return
+		}
+
+		vals := r.URL.Query()
+		for k, v := range vals {
+			if len(v) <= 1 {
+				continue
+			}
+
+			// Set the value to the last element
+			vals.Set(k, v[len(v)-1])
+		}
+		r.URL.RawQuery = vals.Encode()
+
+		handler.ServeHTTP(w, r)
+	})
 }
