@@ -30,8 +30,7 @@ func TestApplication_GetSingleRecipe(t *testing.T) {
 	app, ctx := newApp(t), testhelper.Context(t)
 
 	recipe := app.AddEmptyRecipe(ctx)
-	step, err := app.AddStepToRecipe(ctx, recipe.ID)
-	assert.NoError(t, err)
+	step := app.AddTestStep(ctx, recipe.ID)
 
 	ingredient, err := app.AddIngredient(ctx, t.Name())
 	assert.NoError(t, err)

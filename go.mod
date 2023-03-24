@@ -8,10 +8,12 @@ require (
 	github.com/alecthomas/assert/v2 v2.2.1
 	github.com/carlmjohnson/resperr v0.22.0
 	github.com/go-chi/chi/v5 v5.0.8
+	github.com/google/uuid v1.1.1
 	github.com/jackc/pgconn v1.14.0
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v4 v4.18.0
 	github.com/robfig/bind v0.0.0-20140816170350-2e935d371779
+	github.com/speps/go-hashids/v2 v2.0.1
 	go.uber.org/zap v1.24.0
 )
 
@@ -20,7 +22,6 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.0 // indirect
 	github.com/alecthomas/repr v0.2.0 // indirect
 	github.com/benbjohnson/clock v1.1.0 // indirect
-	github.com/google/uuid v1.1.1 // indirect
 	github.com/hexops/gotextdiff v1.0.3 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect

@@ -3,6 +3,7 @@ package zaphelper
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -59,11 +60,12 @@ func RequestLogger() HTTPMiddleware {
 			t1 := time.Now()
 			defer func() {
 				reqLogger := logger.With(
+					zap.String("http_method", r.Method),
 					zap.Duration("duration", time.Since(t1)),
 					zap.Int("status", ww.Status()),
 					zap.Int("response_bytes", ww.BytesWritten()),
 				)
-				reqLogger.Info("HTTP request served")
+				reqLogger.Info(fmt.Sprintf("%s %s - %d", r.Method, r.URL.Path, ww.Status()))
 			}()
 			next.ServeHTTP(ww, r)
 		})

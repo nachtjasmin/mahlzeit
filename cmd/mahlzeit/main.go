@@ -55,7 +55,16 @@ func run(ctx context.Context, args []string) error {
 		return fmt.Errorf("parsing config.toml failed: %w", err)
 	}
 
-	pool, err := pgxpool.Connect(ctx, cfg.Database.ConnectionString)
+	// The split up between config parsing and connecting is done to enable lazy connects.
+	// With pgx/v5 this is no longer required, so the following code could be simplified again.
+	dbConf, err := pgxpool.ParseConfig(cfg.Database.ConnectionString)
+	if err != nil {
+		return fmt.Errorf("parsing database configuration failed: %w", err)
+	}
+
+	dbConf.LazyConnect = true
+
+	pool, err := pgxpool.ConnectConfig(ctx, dbConf)
 	if err != nil {
 		return err
 	}

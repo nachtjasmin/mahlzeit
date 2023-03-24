@@ -1,0 +1,13 @@
+<!--
+    This manifest is overwritten at build time using the go:generate command.
+    At development time, it loads the files using Vite.
+
+    Vite itself can be run using "npm start".
+-->
+
+{{ define "manifest" }}
+  <script
+    type="module"
+    src="http://localhost:5173/assets/entrypoint.ts"
+  ></script>
+{{ end }}

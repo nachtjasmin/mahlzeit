@@ -7,36 +7,53 @@ import (
 	"net/http"
 
 	"codeberg.org/mahlzeit/mahlzeit/db/queries"
+	"codeberg.org/mahlzeit/mahlzeit/internal/pghelper"
 	"github.com/carlmjohnson/resperr"
 	"github.com/jackc/pgconn"
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v4"
 )
 
-// AddStepToRecipe adds an empty step to the recipe and returns it.
-func (app *Application) AddStepToRecipe(ctx context.Context, id int) (Step, error) {
-	step, err := app.Queries.AddNewEmptyStep(ctx, int64(id))
+// AddStepToRecipe adds a step to the recipe.
+func (app *Application) AddStepToRecipe(ctx context.Context, recipeID int, s *Step) error {
+	id, err := app.Queries.AddNewStep(ctx, queries.AddNewStepParams{
+		RecipeID:    int64(recipeID),
+		Instruction: s.Instruction,
+		Time:        pghelper.Interval(s.Time),
+	})
 	if err != nil {
-		return Step{}, fmt.Errorf("adding step in database for recipe %d: %w", id, err)
+		return fmt.Errorf("adding step in database for recipe %d: %w", id, err)
 	}
 
-	res := Step{
+	s.RecipeID = recipeID
+	s.ID = int(id)
+
+	return nil
+}
+
+// GetStepByID returns a step by its ID. If it does not exist, a not found error is returned.
+func (app *Application) GetStepByID(ctx context.Context, id int) (Step, error) {
+	step, err := app.Queries.GetStepByID(ctx, int64(id))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Step{}, resperr.WithStatusCode(err, http.StatusNotFound)
+		}
+		return Step{}, fmt.Errorf("querying step %d: %w", id, err)
+	}
+
+	return Step{
 		ID:          int(step.ID),
 		RecipeID:    int(step.RecipeID),
 		Instruction: step.Instruction,
-	}
-	_ = step.Time.AssignTo(&res.Time)
-	return res, nil
+		Time:        pghelper.ToDuration(step.Time),
+	}, nil
 }
 
 // UpdateStep updates an existing step.
 func (app *Application) UpdateStep(ctx context.Context, s Step) error {
-	var pgTime pgtype.Interval
-	_ = pgTime.Set(s.Time)
-
 	if err := app.Queries.UpdateStepByID(ctx, queries.UpdateStepByIDParams{
 		ID:          int64(s.ID),
 		Instruction: s.Instruction,
-		Time:        pgTime,
+		Time:        pghelper.Interval(s.Time),
 	}); err != nil {
 		return fmt.Errorf("updating step %d: %w", s.ID, err)
 	}
@@ -63,14 +80,11 @@ type AddIngredientToStepParams struct {
 
 // AddIngredientToStep adds an ingredient to a step.
 func (app *Application) AddIngredientToStep(ctx context.Context, params AddIngredientToStepParams) error {
-	var amount pgtype.Numeric
-	_ = amount.Set(params.Amount)
-
 	if err := app.Queries.AddIngredientToStep(ctx, queries.AddIngredientToStepParams{
 		StepID:        int64(params.StepID),
 		IngredientsID: int64(params.IngredientID),
 		UnitID:        int64(valueOrDefault(params.UnitID)),
-		Amount:        amount,
+		Amount:        pghelper.Numeric(params.Amount),
 		Note:          params.Note,
 	}); err != nil {
 		var pgerr *pgconn.PgError

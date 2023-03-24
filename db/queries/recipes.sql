@@ -79,15 +79,15 @@ where id = sqlc.arg('id');
 -- name: GetStepByID :one
 select * from steps where id = sqlc.arg('id');
 
--- name: AddNewEmptyStep :one
+-- name: AddNewStep :one
 insert into steps (recipe_id, sort_order, instruction, time)
 select sqlc.arg('recipe_id'),
 	   coalesce(max(sort_order), 0) + 1,
-	   '',
-	   '0 seconds'
+	   sqlc.arg('instruction'),
+	   sqlc.arg('time')
 from steps
 where recipe_id = sqlc.arg('recipe_id')
-returning steps.*;
+returning steps.id;
 
 -- name: AddRecipe :one
 insert into recipes(name, description, working_time, waiting_time, created_at, updated_at, created_by, source, servings,

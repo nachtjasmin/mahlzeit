@@ -1,18 +1,23 @@
-{{define "base"}}
-<!doctype html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width,initial-scale=1.0">
-    <title>Mahlzeit</title>
-    <link rel="stylesheet" type="text/css" href="/static/main.css">
-    <script src="https://unpkg.com/htmx.org@1.8.5" defer></script>
-</head>
-<body>
-<main>
-    {{ template "main" . }}
-</main>
-</body>
-</html>
+{{ define "base" }}
+  <!DOCTYPE html>
+  <html lang="de">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+      <title>{{- template "title" . }} | Mahlzeit</title>
+      {{ template "manifest" }}
+    </head>
+    <body>
+      <header class="bg-neutral-100 pt-12 pb-8">
+        <div class="page-header container mx-auto">
+          {{ block "header" . }}
+            <h1>{{ template "title" . }}</h1>
+          {{ end }}
+        </div>
+      </header>
+      <main class="container mx-auto py-12">
+        {{ template "main" . }}
+      </main>
+    </body>
+  </html>
 {{ end }}

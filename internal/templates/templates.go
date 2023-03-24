@@ -100,11 +100,13 @@ func (tc *Templates) BuildCache() error {
 func buildPageTemplate(templateDir, page string) (*template.Template, error) {
 	files := []string{
 		filepath.Join(templateDir, "base.tmpl"),
+		filepath.Join(templateDir, "partials", "manifest.partial.tmpl"),
 		filepath.Join(templateDir, "pages", page),
 	}
 
 	ts, err := template.New(page).
 		Funcs(sprig.HtmlFuncMap()).
+		Funcs(appFunctions).
 		ParseFiles(files...)
 	if err != nil {
 		return nil, fmt.Errorf("parsing templates failed: %w", err)

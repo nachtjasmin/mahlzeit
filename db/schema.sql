@@ -135,7 +135,9 @@ CREATE TABLE public.steps (
     recipe_id bigint NOT NULL,
     sort_order integer DEFAULT 1 NOT NULL,
     instruction text NOT NULL,
-    "time" interval
+    "time" interval,
+    CONSTRAINT instruction_length_check CHECK ((length(instruction) > 0)),
+    CONSTRAINT negative_time_check CHECK (("time" >= '00:00:00'::interval))
 );
 
 
@@ -263,6 +265,14 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
+-- Name: step_ingredients step_ingredient_uniqueness; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.step_ingredients
+    ADD CONSTRAINT step_ingredient_uniqueness UNIQUE (ingredients_id, step_id);
+
+
+--
 -- Name: steps steps_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -369,4 +379,7 @@ ALTER TABLE ONLY public.steps
 
 INSERT INTO public.schema_migrations (version) VALUES
     ('20230215165148'),
-    ('20230215181821');
+    ('20230215181821'),
+    ('20230310215544'),
+    ('20230320210429'),
+    ('20230320221857');

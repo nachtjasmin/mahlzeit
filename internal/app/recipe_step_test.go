@@ -20,8 +20,7 @@ func TestApplication_AddIngredientToStep(t *testing.T) {
 	assert.NoError(t, err)
 
 	recipe := app.AddEmptyRecipe(ctx)
-	step, err := app.AddStepToRecipe(ctx, recipe.ID)
-	assert.NoError(t, err)
+	step := app.AddTestStep(ctx, recipe.ID)
 
 	tests := []struct {
 		name     string
@@ -72,8 +71,7 @@ func TestApplication_AddStepToRecipe(t *testing.T) {
 	app, ctx := newApp(t), testhelper.Context(t)
 	recipe := app.AddEmptyRecipe(ctx)
 
-	step, err := app.AddStepToRecipe(ctx, recipe.ID)
-	assert.NoError(t, err)
+	step := app.AddTestStep(ctx, recipe.ID)
 	testhelper.PartialEqual(t, Step{
 		RecipeID:    recipe.ID,
 		Instruction: "",
@@ -96,10 +94,8 @@ func TestApplication_DeleteIngredientFromStep(t *testing.T) {
 		assert.Equal(t, http.StatusOK, code)
 	})
 	t.Run("missing ingredient returns ok", func(t *testing.T) {
-		step, err := app.AddStepToRecipe(ctx, recipe.ID)
-		assert.NoError(t, err)
-
-		err = app.DeleteIngredientFromStep(ctx, DeleteIngredientFromStepParams{
+		step := app.AddTestStep(ctx, recipe.ID)
+		err := app.DeleteIngredientFromStep(ctx, DeleteIngredientFromStepParams{
 			StepID:       step.ID,
 			IngredientID: -1,
 		})
@@ -107,10 +103,8 @@ func TestApplication_DeleteIngredientFromStep(t *testing.T) {
 		assert.Equal(t, http.StatusOK, code)
 	})
 	t.Run("ingredient is removed", func(t *testing.T) {
-		step, err := app.AddStepToRecipe(ctx, recipe.ID)
-		assert.NoError(t, err)
-
-		err = app.AddIngredientToStep(ctx, AddIngredientToStepParams{
+		step := app.AddTestStep(ctx, recipe.ID)
+		err := app.AddIngredientToStep(ctx, AddIngredientToStepParams{
 			StepID:       step.ID,
 			IngredientID: ingredient.ID,
 			Amount:       1,
@@ -143,10 +137,8 @@ func TestApplication_DeleteRecipeStepByID(t *testing.T) {
 		assert.Equal(t, http.StatusOK, code)
 	})
 	t.Run("step is deleted", func(t *testing.T) {
-		step, err := app.AddStepToRecipe(ctx, recipe.ID)
-		assert.NoError(t, err)
-
-		err = app.DeleteRecipeStepByID(ctx, step.ID)
+		step := app.AddTestStep(ctx, recipe.ID)
+		err := app.DeleteRecipeStepByID(ctx, step.ID)
 		assert.NoError(t, err)
 
 		var count int
@@ -192,12 +184,11 @@ func TestApplication_UpdateStep(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			step, err := app.AddStepToRecipe(ctx, recipe.ID)
-			assert.NoError(t, err)
+			step := app.AddTestStep(ctx, recipe.ID)
 
 			tt.update(&step)
 
-			err = app.UpdateStep(ctx, step)
+			err := app.UpdateStep(ctx, step)
 			assert.NoError(t, err)
 
 			dbStep, err := app.Queries.GetStepByID(ctx, int64(step.ID))
@@ -205,4 +196,24 @@ func TestApplication_UpdateStep(t *testing.T) {
 			testhelper.PartialEqual(t, tt.want, dbStep)
 		})
 	}
+}
+
+func TestApplication_GetStepByID(t *testing.T) {
+	app, ctx := newApp(t), testhelper.Context(t)
+
+	t.Run("not existing step returns not found error", func(t *testing.T) {
+		t.Parallel()
+		_, err := app.GetStepByID(ctx, -1)
+		assert.Error(t, err)
+		assert.Equal(t, http.StatusNotFound, resperr.StatusCode(err))
+	})
+	t.Run("step is returned", func(t *testing.T) {
+		t.Parallel()
+		recipe := app.AddEmptyRecipe(ctx)
+		testStep := app.AddTestStep(ctx, recipe.ID)
+
+		got, err := app.GetStepByID(ctx, testStep.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, testStep, got)
+	})
 }

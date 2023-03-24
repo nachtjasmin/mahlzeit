@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -87,25 +88,62 @@ func (a appWrapper) postEditSingleRecipe(w http.ResponseWriter, r *http.Request)
 	return nil
 }
 
-func (a appWrapper) postAddStepToRecipe(w http.ResponseWriter, r *http.Request) error {
-	id := httpreq.MustIDParam(r, "id")
-	step, err := a.app.AddStepToRecipe(r.Context(), id)
+func (a appWrapper) getAddStepToRecipe(w http.ResponseWriter, r *http.Request) error {
+	if !htmx.IsHTMXRequest(r) {
+		panic("progressive enhancement is not implemented yet")
+	}
+
+	if err := a.app.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step_edit", app.Step{
+		RecipeID: httpreq.MustIDParam(r, "id"),
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a appWrapper) getSingleStep(w http.ResponseWriter, r *http.Request) error {
+	stepID, _ := httpreq.IDParam(r, "stepID")
+
+	// If we invoke this route with step 0, we assume that the step hasn't been persisted yet.
+	// In this case, we return nothing, so that the HTML node is removed again.
+	if stepID == 0 {
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+
+	step, err := a.app.GetStepByID(r.Context(), stepID)
 	if err != nil {
 		return err
 	}
 
-	if htmx.IsHTMXRequest(r) {
-		if err := a.app.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step", step); err != nil {
-			return err
-		}
-	} else {
-		http.Redirect(w, r, "", http.StatusFound)
+	if err := a.app.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step", step); err != nil {
+		return err
 	}
+
 	return nil
 }
 
-func (a appWrapper) postNewRecipeStep(w http.ResponseWriter, r *http.Request) error {
-	id := httpreq.MustIDParam(r, "id")
+func (a appWrapper) setStepToEditMode(w http.ResponseWriter, r *http.Request) error {
+	if !htmx.IsHTMXRequest(r) {
+		panic("progressive enhancement is not implemented yet")
+	}
+
+	step, err := a.app.GetStepByID(r.Context(), httpreq.MustIDParam(r, "stepID"))
+	if err != nil {
+		return err
+	}
+
+	if err := a.app.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step_edit", step); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a appWrapper) updateRecipeStep(w http.ResponseWriter, r *http.Request) error {
+	recipeID := httpreq.MustIDParam(r, "id")
+	stepID, _ := httpreq.IDParam(r, "stepID") // optional, because we differentiate between both states below
 	if err := r.ParseForm(); err != nil {
 		return err
 	}
@@ -122,22 +160,24 @@ func (a appWrapper) postNewRecipeStep(w http.ResponseWriter, r *http.Request) er
 	}
 
 	dur, _ := time.ParseDuration(data.Time)
-	if err := a.app.UpdateStep(r.Context(), app.Step{
-		ID:          id,
+	step := &app.Step{
+		ID:          stepID,
+		RecipeID:    recipeID,
 		Instruction: data.Instruction,
 		Time:        dur,
-	}); err != nil {
-		return err
+	}
+	if stepID != 0 {
+		if err := a.app.UpdateStep(r.Context(), *step); err != nil {
+			return fmt.Errorf("updating step %d: %w", stepID, err)
+		}
+	} else {
+		if err := a.app.AddStepToRecipe(r.Context(), recipeID, step); err != nil {
+			return fmt.Errorf("adding step to recipe %d: %w", recipeID, err)
+		}
 	}
 
 	if htmx.IsHTMXRequest(r) {
-		if err := a.app.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step", app.Step{
-			ID:          id,
-			RecipeID:    0,
-			Instruction: data.Instruction,
-			Time:        dur,
-			Ingredients: nil,
-		}); err != nil {
+		if err := a.app.Templates.RenderTemplate(w, "recipes/edit.tmpl", "single_step", step); err != nil {
 			return err
 		}
 	} else {
@@ -146,12 +186,13 @@ func (a appWrapper) postNewRecipeStep(w http.ResponseWriter, r *http.Request) er
 	return nil
 }
 
-func (a appWrapper) deleteRecipeStep(_ http.ResponseWriter, r *http.Request) error {
-	id := httpreq.MustIDParam(r, "id")
+func (a appWrapper) deleteRecipeStep(w http.ResponseWriter, r *http.Request) error {
+	id := httpreq.MustIDParam(r, "stepID")
 	if err := a.app.DeleteRecipeStepByID(r.Context(), id); err != nil {
 		return err
 	}
 
+	w.WriteHeader(http.StatusOK)
 	return nil
 }
 
@@ -176,11 +217,11 @@ func (a appWrapper) postAddNewRecipeStepIngredient(w http.ResponseWriter, r *htt
 	data.Ingredients = ingredients
 	data.Units = units
 
-	stepID, err := httpreq.IDParam(r, "stepID")
+	stepID, err := httpreq.StrictIDParam(r, "stepID")
 	if err != nil {
 		return err
 	}
-	recipeID, err := httpreq.IDParam(r, "id")
+	recipeID, err := httpreq.StrictIDParam(r, "id")
 	if err != nil {
 		return err
 	}
@@ -200,7 +241,7 @@ func (a appWrapper) postAddNewRecipeStepIngredient(w http.ResponseWriter, r *htt
 
 func (a appWrapper) postAddRecipeStepIngredient(w http.ResponseWriter, r *http.Request) error {
 	recipeID := httpreq.MustIDParam(r, "id")
-	stepID, err := httpreq.IDParam(r, "stepID")
+	stepID, err := httpreq.StrictIDParam(r, "stepID")
 	if err != nil {
 		return err
 	}
@@ -246,12 +287,12 @@ func (a appWrapper) postAddRecipeStepIngredient(w http.ResponseWriter, r *http.R
 }
 
 func (a appWrapper) deleteRecipeStepIngredient(_ http.ResponseWriter, r *http.Request) error {
-	stepID, err := httpreq.IDParam(r, "stepID")
+	stepID, err := httpreq.StrictIDParam(r, "stepID")
 	if err != nil {
 		return err
 	}
 
-	ingredientID, err := httpreq.IDParam(r, "ingredientID")
+	ingredientID, err := httpreq.StrictIDParam(r, "ingredientID")
 	if err != nil {
 		return err
 	}

@@ -5,11 +5,53 @@ In order to work on *Mahlzeit*, several tools are required:
 - Go 1.20 compiler or newer (since the application is written in Go)
 - [sqlc](https://sqlc.dev) for code-generation of SQL queries
 - [dbmate](https://github.com/amacneil/dbmate) for our migrations.
+- [npm](https://www.npmjs.com/) for the web development.
 
 Optional, but recommended:
 
-- `docker compose` for quickly spinning up  development databases
+- `docker compose` for quickly spinning up development databases
 - [direnv](https://direnv.net/)
+
+## Working on templates
+
+In order to work with the templates and their styling, we need `npm` set up. We aim to remove it at a later
+stage, but for now, it's easier to work with it and the [Vite](https://vitejs.dev/) ecosystem.
+
+In order to start Vite and enabling on-the-fly compilation for CSS/JS assets, open a terminal and run:
+
+```shell
+$ cd web
+$ npm install
+$ npm start
+```
+
+This starts the "asset server" on port 5173, which is then injected into the templates with
+the [manifest.partial.tmpl](./web/templates/partials/manifest.partial.tmpl).
+
+## Building the application
+
+In order to build the application, we need to generate the assets first:
+
+```shell
+$ go generate ./web
+```
+
+After that, we can build the application using the usual `go build` command:
+
+```shell
+$ go build ./cmd/mahlzeit
+```
+
+This outputs a binary called `mahlzeit`. Because the compiled assets are not embedded into the binary at this moment,
+they need to be copied along with the binary. Example:
+
+```shell
+$ export app_dir=$(mktemp -d) # create a new temporary directory
+$ mv ./mahlzeit $app_dir      # copy the binary to the dir 
+$ mv ./web/assets/ $app_dir/  # copy the compiled assets
+```
+
+We are working to improve the experience for that, so that you only need to copy the binary.
 
 ---
 
@@ -22,7 +64,7 @@ $ dbmate --wait up      # applying the migrations
 $ go run ./cmd/mahlzeit # starting the application
 ```
 
-Now *Mahlzeit* is starting and reachable on [localhost:4000](http://localhost:4000/)! 
+Now *Mahlzeit* is starting and reachable on [localhost:4000](http://localhost:4000/)!
 
 ## Working with the database
 

@@ -13,28 +13,28 @@ import (
 	"github.com/jackc/pgtype"
 )
 
-const addNewEmptyStep = `-- name: AddNewEmptyStep :one
+const addNewStep = `-- name: AddNewStep :one
 insert into steps (recipe_id, sort_order, instruction, time)
 select $1,
 	   coalesce(max(sort_order), 0) + 1,
-	   '',
-	   '0 seconds'
+	   $2,
+	   $3
 from steps
 where recipe_id = $1
-returning steps.id, steps.recipe_id, steps.sort_order, steps.instruction, steps.time
+returning steps.id
 `
 
-func (q *Queries) AddNewEmptyStep(ctx context.Context, recipeID int64) (Step, error) {
-	row := q.db.QueryRow(ctx, addNewEmptyStep, recipeID)
-	var i Step
-	err := row.Scan(
-		&i.ID,
-		&i.RecipeID,
-		&i.SortOrder,
-		&i.Instruction,
-		&i.Time,
-	)
-	return i, err
+type AddNewStepParams struct {
+	RecipeID    int64
+	Instruction string
+	Time        pgtype.Interval
+}
+
+func (q *Queries) AddNewStep(ctx context.Context, arg AddNewStepParams) (int64, error) {
+	row := q.db.QueryRow(ctx, addNewStep, arg.RecipeID, arg.Instruction, arg.Time)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const addRecipe = `-- name: AddRecipe :one

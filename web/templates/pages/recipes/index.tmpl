@@ -1,12 +1,13 @@
+{{ define "title" }}Liste aller Rezepte{{ end }}
+
 {{ define "main" }}
-    <h1>Liste aller Rezepte</h1>
-    <ul>
-        {{ range . }}
-            <li>
-                <a href="/recipes/{{ .ID }}">
-                    {{ .Name }}
-                </a>
-            </li>
-        {{ end }}
-    </ul>
+  <ul class="list-inside list-disc">
+    {{ range . }}
+      <li>
+        <a href="/recipes/{{ .ID }}">
+          {{ .Name }}
+        </a>
+      </li>
+    {{ end }}
+  </ul>
 {{ end }}

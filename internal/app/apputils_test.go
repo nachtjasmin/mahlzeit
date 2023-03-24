@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"codeberg.org/mahlzeit/mahlzeit/db/queries"
+	"codeberg.org/mahlzeit/mahlzeit/internal/pghelper"
 	"codeberg.org/mahlzeit/mahlzeit/internal/testhelper"
 	"github.com/alecthomas/assert/v2"
-	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap/zaptest"
 )
@@ -38,9 +38,6 @@ func newApp(t *testing.T) testApplication {
 func (app *testApplication) AddEmptyRecipe(ctx context.Context) Recipe {
 	app.t.Helper()
 
-	var t pgtype.Interval
-	_ = t.Set(time.Minute * 10)
-
 	userID, err := app.Queries.AddDemoUser(ctx)
 	assert.NoError(app.t, err)
 
@@ -48,8 +45,8 @@ func (app *testApplication) AddEmptyRecipe(ctx context.Context) Recipe {
 		Name:        testhelper.RandomString(20),
 		Description: app.t.Name(),
 		Servings:    2,
-		WaitingTime: t,
-		WorkingTime: t,
+		WaitingTime: pghelper.Interval(time.Minute * 10),
+		WorkingTime: pghelper.Interval(time.Minute * 10),
 		CreatedBy:   userID,
 	}
 	recipe, err := app.Queries.AddRecipe(ctx, params)
@@ -63,4 +60,17 @@ func (app *testApplication) AddEmptyRecipe(ctx context.Context) Recipe {
 		BaseServings: 2,
 		Servings:     2,
 	}
+}
+
+func (app *testApplication) AddTestStep(ctx context.Context, recipeID int) Step {
+	app.t.Helper()
+
+	step := &Step{
+		RecipeID:    recipeID,
+		Instruction: app.t.Name(),
+	}
+	err := app.AddStepToRecipe(ctx, recipeID, step)
+	assert.NoError(app.t, err)
+
+	return *step
 }

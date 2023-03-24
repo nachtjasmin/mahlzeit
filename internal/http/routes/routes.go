@@ -33,10 +33,10 @@ func All(c *app.Application) *chi.Mux {
 	// processing should be stopped.
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	// Add a static file server for the assets.
-	// In the future, those assets should be embedded into the binary to simplify the deployment.
-	fileServer := http.FileServer(http.Dir("./web/static/"))
-	r.Handle("/static/*", http.StripPrefix("/static", fileServer))
+	// Add a file server for the compiled assets.
+	// In the future, those should be embedded into the binary to simplify the deployment.
+	assetsServer := http.FileServer(http.Dir("./assets/"))
+	r.Handle("/assets/*", http.StripPrefix("/assets", assetsServer))
 
 	w := appWrapper{c}
 	r.Route("/recipes", func(r chi.Router) {
@@ -47,9 +47,11 @@ func All(c *app.Application) *chi.Mux {
 			r.Get("/", errorWrapper(w.getSingleRecipe))
 			r.Get("/edit", errorWrapper(w.getEditSingleRecipe))
 			r.Post("/edit", errorWrapper(w.postEditSingleRecipe))
-			r.Post("/edit/add_step", errorWrapper(w.postAddStepToRecipe))
+			r.Get("/edit/add_step", errorWrapper(w.getAddStepToRecipe))
 			r.Route("/steps/{stepID}", func(r chi.Router) {
-				r.Post("/", errorWrapper(w.postNewRecipeStep))
+				r.Get("/", errorWrapper(w.getSingleStep))
+				r.Post("/", errorWrapper(w.setStepToEditMode))
+				r.Put("/", errorWrapper(w.updateRecipeStep))
 				r.Delete("/", errorWrapper(w.deleteRecipeStep))
 				r.Post("/add_ingredient", errorWrapper(w.postAddNewRecipeStepIngredient))
 				r.Post("/ingredients", errorWrapper(w.postAddRecipeStepIngredient))
@@ -118,9 +120,9 @@ func stripMultipleQueryParameters(handler http.Handler) http.Handler {
 // validateID gets the route parameter associated with idParam and validates
 // whether it's a valid ID or not, as determined by [httpreq.IDParam].
 func validateID(idParam string) func(handler http.Handler) http.Handler {
-	return func(handler http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_, err := httpreq.IDParam(r, idParam)
+			_, err := httpreq.StrictIDParam(r, idParam)
 			if err != nil {
 				app.HandleError(w, r, err)
 				return
