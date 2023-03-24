@@ -42,18 +42,7 @@ func All(c *app.Application) *chi.Mux {
 	r.Route("/recipes", func(r chi.Router) {
 		r.Get("/", errorWrapper(w.getAllRecipes))
 		r.Route("/{id}", func(r chi.Router) {
-			// Add simple middleware to validate the recipe ID.
-			r.Use(func(next http.Handler) http.Handler {
-				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					_, err := httpreq.IDParam(r, "id")
-					if err != nil {
-						app.HandleError(w, r, err)
-						return
-					}
-
-					next.ServeHTTP(w, r)
-				})
-			})
+			r.Use(validateID("id"))
 
 			r.Get("/", errorWrapper(w.getSingleRecipe))
 			r.Get("/edit", errorWrapper(w.getEditSingleRecipe))
@@ -124,4 +113,20 @@ func stripMultipleQueryParameters(handler http.Handler) http.Handler {
 
 		handler.ServeHTTP(w, r)
 	})
+}
+
+// validateID gets the route parameter associated with idParam and validates
+// whether it's a valid ID or not, as determined by [httpreq.IDParam].
+func validateID(idParam string) func(handler http.Handler) http.Handler {
+	return func(handler http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, err := httpreq.IDParam(r, idParam)
+			if err != nil {
+				app.HandleError(w, r, err)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }
