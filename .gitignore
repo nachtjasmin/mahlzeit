@@ -131,4 +131,8 @@ fabric.properties
 .history
 .ionide
 
+# exclude air files 
+tmp/build-errors.log
+mahlzeit
+
 # End of https://www.toptal.com/developers/gitignore/api/go,intellij+all,visualstudiocode
