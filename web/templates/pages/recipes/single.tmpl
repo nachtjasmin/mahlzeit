@@ -1,15 +1,18 @@
 {{ define "title" }}{{ .Name }}{{ end }}
 
 {{ define "header" }}
-	<div>
-		<div class="align-center flex flex-row">
-			<h1>{{ .Name }}</h1>
-			<a class="btn ml-4" href="/recipes/{{ .ID }}/edit">Bearbeiten</a>
+	<div class="recipe-header">
+		<div class="recipe-header__inner">
+			<div>
+				<h1>{{ .Name }}</h1>
+
+				<p class="recipe-time-information">
+					erstellt am:
+					<time>{{ .CreatedAt | date "02.01.2006" }}</time>
+				</p>
+			</div>
+			<a class="btn" href="/recipes/{{ .ID }}/edit">Bearbeiten</a>
 		</div>
-		<p class="mt-2 text-sm">
-			erstellt am:
-			<time>{{ .CreatedAt | date "02.01.2006" }}</time>
-		</p>
 	</div>
 {{ end }}
 

@@ -1,1 +1,25 @@
+.recipe-header {
+	/* Apply basic container styles */
+	@apply container mx-auto;
 
+	/* Limit the maximum width, so that the the instructions are readable. */
+	@apply max-w-6xl px-4;
+}
+
+.recipe-header__inner {
+	/* For mobile layouts, stack the contents vertically. */
+	@apply flex items-start gap-4;
+
+	/* On larger screens, align the content horizontally and push the edit button to the end. */
+	@screen md {
+		@apply flex-row items-center justify-between;
+	}
+}
+
+.recipe-header h1 {
+	@apply font-old-style text-4xl font-bold text-rainbow-darkred;
+}
+
+.recipe-time-information {
+	@apply mt-2 text-sm italic;
+}
