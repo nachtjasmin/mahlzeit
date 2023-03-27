@@ -11,6 +11,7 @@ Optional, but recommended:
 
 - `docker compose` for quickly spinning up development databases
 - [direnv](https://direnv.net/)
+- [air](https://github.com/cosmtrek/air)
 
 ## Working on templates
 
@@ -65,6 +66,12 @@ $ go run ./cmd/mahlzeit # starting the application
 ```
 
 Now *Mahlzeit* is starting and reachable on [localhost:4000](http://localhost:4000/)!
+
+### Hot code reload
+
+We use air to automatically restart mahlzeit when code changes. 
+
+To start the server with air, just run `air` in the project root directory. 
 
 ## Working with the database
 
