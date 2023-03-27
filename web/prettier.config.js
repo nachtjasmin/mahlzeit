@@ -1,6 +1,7 @@
 module.exports = {
-  plugins: [
-    require("prettier-plugin-tailwindcss"),
-    require("prettier-plugin-go-template"),
-  ],
+	useTabs: true,
+	plugins: [
+		require("prettier-plugin-tailwindcss"),
+		require("prettier-plugin-go-template"),
+	],
 };
