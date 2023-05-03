@@ -1,6 +1,14 @@
 # Development
 
-In order to work on *Mahlzeit*, several tools are required:
+## Within containers
+
+If you are using GitHub Codespaces or Visual Studio Code and you have Docker installed,
+just open this repository in VS code. We've preconfigured everything for you, so that you can
+start code quite easily. :3
+
+## Local development
+
+In order to work on _Mahlzeit_, several tools are required:
 
 - Go 1.20 compiler or newer (since the application is written in Go)
 - [sqlc](https://sqlc.dev) for code-generation of SQL queries

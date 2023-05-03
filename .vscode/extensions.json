@@ -1,0 +1,9 @@
+{
+	"recommendations": [
+		"golang.go",
+		"csstools.postcss",
+		"tamasfe.even-better-toml",
+		"bradlc.vscode-tailwindcss",
+		"esbenp.prettier-vscode"
+	]
+}
