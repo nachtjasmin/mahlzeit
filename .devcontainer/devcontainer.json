@@ -8,14 +8,12 @@
 	"features": {
 		"ghcr.io/devcontainers/features/node:1": { "version": "lts" },
 		"ghcr.io/devcontainers/features/git-lfs:1": {},
-		"ghcr.io/christophermacgown/devcontainer-features/direnv:1": {}
+		"ghcr.io/christophermacgown/devcontainer-features/direnv:1": {},
+		"ghcr.io/guiyomh/features/just": {}
 	},
 	"forwardPorts": [4000, 5173],
 	"updateContentCommand": "direnv allow",
-	"postCreateCommand": {
-		"migrations": ["dbmate", "--wait", "up"],
-		"npm deps": "cd web && npm ci"
-	},
+	"postCreateCommand": "direnv exec . just prepare",
 	"portsAttributes": {
 		"4000": {
 			"label": "Mahlzeit"
