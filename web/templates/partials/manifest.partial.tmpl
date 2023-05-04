@@ -6,8 +6,12 @@
 -->
 
 {{ define "manifest" }}
+{{ $host := "localhost:5173" }}
+{{ with (env "CODESPACES") }}
+  {{ $host = printf "%s-%d.%s" (env "CODESPACE_NAME") 5173 (env "GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN") }}
+{{ end }}
   <script
     type="module"
-    src="http://localhost:5173/assets/entrypoint.ts"
+    src="http://{{ $host }}/assets/entrypoint.ts"
   ></script>
 {{ end }}
