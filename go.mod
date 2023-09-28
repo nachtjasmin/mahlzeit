@@ -7,8 +7,9 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/alecthomas/assert/v2 v2.2.1
 	github.com/carlmjohnson/resperr v0.22.0
+	github.com/evanw/esbuild v0.19.4
 	github.com/go-chi/chi/v5 v5.0.8
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.3.1
 	github.com/jackc/pgconn v1.14.0
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v4 v4.18.0
@@ -38,5 +39,6 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 )

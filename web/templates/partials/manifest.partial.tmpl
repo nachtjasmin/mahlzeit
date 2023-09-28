@@ -1,10 +1,3 @@
-<!--
-    This manifest is overwritten at build time using the go:generate command.
-    At development time, it loads the files using Vite.
-
-    Vite itself can be run using "npm start".
--->
-
 {{ define "manifest" }}
 {{ $host := "localhost:5173" }}
 {{ with (env "CODESPACES") }}
@@ -12,6 +5,7 @@
 {{ end }}
   <script
     type="module"
-    src="http://{{ $host }}/assets/entrypoint.ts"
+    src="http://{{ $host }}/js/app.js"
   ></script>
+  <link href="http://{{ $host }}/css/app.css" rel="stylesheet" />
 {{ end }}

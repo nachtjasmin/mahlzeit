@@ -6,7 +6,6 @@
 	"service": "app",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	"features": {
-		"ghcr.io/devcontainers/features/node:1": { "version": "lts" },
 		"ghcr.io/devcontainers/features/git-lfs:1": {},
 		"ghcr.io/christophermacgown/devcontainer-features/direnv:1": {},
 		"ghcr.io/guiyomh/features/just": {}

@@ -15,7 +15,6 @@ _install-tools:
 
 _install-deps:
 	go mod download
-	cd web && npm ci
 
 # Build the application, it's saved under ./mahlzeit
 build: _install-deps
@@ -42,20 +41,13 @@ package: build
 	cp {{tarball}} {{invocation_directory()}}
 	rm -rf {{tarball}} {{tardir}}
 
-_watch-assets:
-	cd web && npm start
-
-_watch-code:
-	air
-
 # Apply all pending database migrations.
 migrate:
 	dbmate --wait up
 
 # Installs the dependencies and applies all database migrations.
-prepare: _install-deps _install-tools migrate
+prepare: _install-deps migrate
 
 # Start the watch mode for local development
 dev:
-	just _watch-assets &
-	just _watch-code
+	air
