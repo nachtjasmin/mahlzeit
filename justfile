@@ -43,11 +43,12 @@ package: build
 
 # Apply all pending database migrations.
 migrate:
-	dbmate --wait up
+    docker compose up -d
+    dbmate --wait up
 
 # Installs the dependencies and applies all database migrations.
 prepare: _install-deps migrate
 
 # Start the watch mode for local development
-dev:
-	air
+dev: migrate
+    air
